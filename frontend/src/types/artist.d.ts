@@ -3,26 +3,26 @@
 export interface Artist {
   _id: string;
   name: string;
-  email?: string;
-  phone?: string;
-  bio?: string;
+  email?: string; // Optional - (This is part of contact.email in the form)
+  phone?: string; // Optional - (This is part of contact.phone in the form)
+  bio?: string;   // Optional
   socialMedia?: {
     instagram?: string;
-    facebook?: string;
+    facebook?: string; // Not explicitly used in form but could be
     website?: string;
-    other?: string; // Added 'other' based on your response example
+    other?: string;
   };
-  contact?: { // Added 'contact' based on your response example
+  contact?: {
     email: string;
     phone: string;
     address: string;
   };
-  status?: 'active' | 'inactive'; // Made optional as it's not in your example response
+  status?: 'active' | 'inactive';
+  profileImageUrl?: string; // <-- THIS MUST BE PRESENT
   createdAt: string;
   updatedAt: string;
-  __v: number; // Added
-  internalNotes?: string; // Added
+  __v: number;
+  internalNotes?: string;
 }
 
-// This type now reflects your actual API response for GET /api/artists
 export type ArtistsResponse = Artist[];

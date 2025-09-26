@@ -38,18 +38,19 @@ const ArtworkSchema = new mongoose.Schema({
       default: 'inches',
       required: [true, 'Unit for dimensions is required'],
     },
-    displayUnit: { // To store user's preferred display unit (frontend will convert)
-      type: String,
-      enum: ['inches', 'cm'],
-      default: 'inches',
-    },
+    // Removed displayUnit as frontend will handle conversions
   },
-  status: { // Corresponds to the "Active" pill in your view
+  status: { // Aligned with frontend form
     type: String,
-    enum: ['active', 'sold', 'in_competition', 'inactive', 'archived'],
-    default: 'active',
+    enum: ['available', 'sold', 'on_display', 'loaned', 'archived'], // Updated enum
+    default: 'available',
   },
-  noOfDays: { // Clarified: Number of days taken to create the artwork
+  sellingPrice: { // <-- ADDED THIS FIELD for the Artwork's base price
+    type: Number,
+    required: [true, 'Artwork selling price is required'],
+    default: 0,
+  },
+  noOfDays: { // Number of days taken to create the artwork
     type: Number,
     default: 0,
   },
@@ -66,31 +67,29 @@ const ArtworkSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // Additional internal fields
-  internalRemarks: [{ // Array of internal comments
-    timestamp: { type: Date, default: Date.now },
+  // Simplified internalRemarks to match frontend and common use
+  internalRemarks: [{ // Array of internal comments as strings (frontend sends single string, backend converts)
+    remark: { type: String }, // Renamed from 'comment' to 'remark' for consistency with frontend
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    comment: String,
+    createdAt: { type: Date, default: Date.now },
   }],
+  // Simplified marketingStatus to match frontend's simpler input
   marketingStatus: {
-    instagramPost: { type: String, enum: ['Done', 'Pending', 'No'], default: 'No' },
-    facebookPost: { type: String, enum: ['Done', 'Pending', 'No'], default: 'No' },
-    twitterPost: { type: String, enum: ['Done', 'Pending', 'No'], default: 'No' },
-    lastUpdatedByUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    lastUpdatedAt: { type: Date },
-    notes: String,
+    type: String,
+    trim: true,
+    default: '',
   },
-  monitoringItems: [{ // Custom monitoring points
-    label: String,
-    status: { type: String, enum: ['Yes', 'No', 'Pending'], default: 'No' },
-    lastUpdated: { type: Date, default: Date.now },
-    notes: String,
+  // Simplified monitoringItems to an array of strings to match frontend
+  monitoringItems: [{
+    type: String,
+    trim: true,
   }],
-  // Soft Delete Fields
+
+  // Soft Delete Fields (kept select: false, but controller needs to explicitly select them)
   isDeleted: {
     type: Boolean,
     default: false,
-    select: false, // Don't return by default
+    select: false,
   },
   deletedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -103,7 +102,7 @@ const ArtworkSchema = new mongoose.Schema({
   },
   deletionApprovalStatus: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'none'],
+    enum: ['none', 'pending', 'approved', 'rejected'], // Aligned with ArtworkController's definition
     default: 'none',
     select: false,
   },

@@ -11,6 +11,9 @@ import ArtworksListPage from '../src/Pages/ArtworksListPage';
 import ProfilePage from '../src/Pages/ProfilePage';
 import ArtistDetailPage from '../src/Pages/ArtistDetailPage';
 import ArtworkDetailPage from '../src/Pages/ArtworkDetailPage';
+import ArtistFormPage from '../src/Pages/ArtistFormPage'; // <-- Imported
+import ArtworkFormPage from '../src/Pages/ArtworkFormPage'; // <-- Imported
+
 
 import AppLayout from '../src/Components/AppLayout';
 
@@ -50,21 +53,38 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
+          {/* This Route catches all paths for authenticated users and wraps them in ProtectedRoute and AppLayout */}
           <Route element={<ProtectedRoute />}>
             <Route
-              path="/*"
+              path="/*" // Match any sub-path here
               element={
                 <AppLayout>
+                  {/* Inner Routes for pages displayed within the AppLayout */}
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+
+                    {/* ARTISTS ROUTES */}
                     <Route path="/artists" element={<ArtistsListPage />} />
+                    {/* IMPORTANT: Place 'new' and 'edit' routes BEFORE the dynamic ':id' route */}
+                    <Route path="/artists/new" element={<ArtistFormPage />} />
+                    <Route path="/artists/edit/:id" element={<ArtistFormPage />} />
                     <Route path="/artists/:id" element={<ArtistDetailPage />} />
+
+                    {/* ARTWORKS ROUTES */}
                     <Route path="/artworks" element={<ArtworksListPage />} />
+                    {/* IMPORTANT: Place 'new' and 'edit' routes BEFORE the dynamic ':id' route */}
+                    <Route path="/artworks/new" element={<ArtworkFormPage />} />
+                    <Route path="/artworks/edit/:id" element={<ArtworkFormPage />} />
                     <Route path="/artworks/:id" element={<ArtworkDetailPage />} />
+                    
                     <Route path="/profile" element={<ProfilePage />} />
                     
-                    {/* Add other protected routes here */}
+                    {/* Add other protected routes here if needed */}
+                    {/* Example: <Route path="/reports" element={<ReportsPage />} /> */}
+
+                    {/* Fallback for any unmatched paths within the protected area */}
+                    <Route path="*" element={<div>404 - Page Not Found</div>} />
                   </Routes>
                 </AppLayout>
               }
