@@ -88,7 +88,7 @@ const ArtworksListPage: React.FC = () => {
 
   const handleAddArtwork = () => navigate('/artworks/new');
   const handleView = (id: string) => navigate(`/artworks/${id}`);
-  const handleEdit = (id: string) => navigate(`/artworks/${id}/edit`);
+  const handleEdit = (id: string) => navigate(`/artworks/edit/${id}`);
 
   const handleDelete = async (id: string) => {
     try {
