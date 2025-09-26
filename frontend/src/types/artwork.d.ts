@@ -108,8 +108,12 @@ export interface Pricing {
 
 
 export type ArtworksResponse = {
+  count: number;
+  currentPage: number;
   artworks: Artwork[];
   page: number;
   pages: number;
   total: number;
 };
+
+export { Artist };

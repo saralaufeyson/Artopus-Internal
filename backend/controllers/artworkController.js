@@ -23,48 +23,31 @@ const handleMongooseError = (res, error) => {
 // @access  Private
 const getArtworks = async (req, res) => {
   try {
-    const { search, artist, status, tag, minPrice, maxPrice, page = 1, limit = 10, deletionApprovalStatus } = req.query;
+    const { search, artist, status, tag, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
 
-    const query = {
-      isDeleted: { $ne: true } // Exclude soft-deleted by default from general view
-    };
+    const query = {};
 
-    // If admin is specifically requesting pending deletion items, override default isDeleted filter
-    if (deletionApprovalStatus && req.user.role === 'admin') {
-      query.deletionApprovalStatus = deletionApprovalStatus;
-      delete query.isDeleted; // Don't filter by isDeleted if specifically looking for deletion status
-    } else if (deletionApprovalStatus) {
-        // If non-admin tries to filter by deletion status, still only show non-deleted
-        // Or you might want to return an error: return res.status(403).json({ message: 'Not authorized to view specific deletion statuses.' });
-        query.deletionApprovalStatus = deletionApprovalStatus;
-    }
-
-
-    // Build query filters (assuming penName is on Artwork model, or populate and search artist's penName)
     if (search) {
       query.$or = [
         { codeNo: { $regex: search, $options: 'i' } },
         { title: { $regex: search, $options: 'i' } },
-        { penName: { $regex: search, $options: 'i' } }, // Assuming penName is on Artwork model, or will be populated artist.penName
       ];
     }
-    if (artist) { // Filter by artist ID directly or find by name
-        if (mongoose.Types.ObjectId.isValid(artist)) { // Check if 'artist' is an ID
+    if (artist) {
+        if (mongoose.Types.ObjectId.isValid(artist)) {
             query.artist = artist;
-        } else { // Assume 'artist' is a name
+        } else {
             const artistDoc = await Artist.findOne({ name: { $regex: artist, $options: 'i' } });
             if (artistDoc) {
                 query.artist = artistDoc._id;
             } else {
-                query.artist = null; // No artist found with this name
+                query.artist = null;
             }
         }
     }
     if (status) query.status = status;
     if (tag) query.tags = { $in: [tag] };
 
-    // Price filtering (assuming sellingPrice is on Artwork or Pricing model)
-    // If pricing is in a separate model, you'd need to adjust this to query/aggregate on Pricing
     if (minPrice) query.sellingPrice = { ...query.sellingPrice, $gte: parseFloat(minPrice) };
     if (maxPrice) query.sellingPrice = { ...query.sellingPrice, $lte: parseFloat(maxPrice) };
 
@@ -72,12 +55,12 @@ const getArtworks = async (req, res) => {
     const skip = (parseInt(page) - 1) * pageSize;
 
     const artworks = await Artwork.find(query)
-      .populate('artist', 'name profileImageUrl contact.email penName') // Populate artist's details
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .populate('artist', 'name profileImageUrl contact.email penName')
+      .sort({ createdAt: -1 })
       .limit(pageSize)
       .skip(skip);
 
-    const count = await Artwork.countDocuments(query); // Total documents for pagination
+    const count = await Artwork.countDocuments(query);
 
     res.status(200).json({
       artworks,
@@ -97,14 +80,13 @@ const getArtworks = async (req, res) => {
 const getArtworkById = async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id)
-      .populate('artist', 'name penName contact socialMedia bankDetails bio internalNotes profileImageUrl') // Populate full artist details
-      .populate('internalRemarks.userId', 'username firstName lastName'); // Populate who made internal remarks
+      .populate('artist', 'name penName contact socialMedia bankDetails bio internalNotes profileImageUrl')
+      .populate('internalRemarks.userId', 'username firstName lastName');
 
-    if (!artwork || (artwork.isDeleted && req.user.role !== 'admin')) { // Hide if soft-deleted, unless admin
+    if (!artwork) {
       return res.status(404).json({ message: 'Artwork not found or not accessible' });
     }
 
-    // Also fetch associated pricing details
     const pricing = await Pricing.findOne({ artwork: artwork._id });
 
     res.status(200).json({ artwork, pricing });
@@ -120,11 +102,10 @@ const createArtwork = async (req, res) => {
   const {
     codeNo, title, penName, artistId, medium, dimensions, status, noOfDays,
     imageUrl, tags, hasParticipatedInCompetition,
-    internalRemarks, // Now a string from frontend
-    marketingStatus, // Now a string from frontend
-    monitoringItems, // Now an array of strings from frontend
-    sellingPrice, // Now on Artwork model
-    // Pricing fields also sent in req.body
+    internalRemarks,
+    marketingStatus,
+    monitoringItems,
+    sellingPrice,
     isOriginalAvailable, artMaterialCost, artistCharge,
     isPrintOnDemandAvailable, basePrintCostPerSqFt, isInAmazon, amazonLink,
     otherPlatformListings,
@@ -154,8 +135,6 @@ const createArtwork = async (req, res) => {
       internalRemarks: internalRemarks ? [{ remark: internalRemarks, userId: req.user._id }] : [],
       marketingStatus,
       monitoringItems: monitoringItems || [],
-      isDeleted: false,
-      deletionApprovalStatus: 'none',
     });
     const createdArtwork = await artwork.save();
 
@@ -209,24 +188,21 @@ const updateArtwork = async (req, res) => {
   const {
     codeNo, title, penName, artistId, medium, dimensions, status, noOfDays,
     imageUrl, tags, hasParticipatedInCompetition,
-    internalRemarks, // Now a string from frontend
-    marketingStatus, // Now a string from frontend
-    monitoringItems, // Now an array of strings from frontend
-    sellingPrice, // Now on Artwork model
-    // Pricing fields also sent in req.body for recalculation
+    internalRemarks,
+    marketingStatus,
+    monitoringItems,
+    sellingPrice,
     isOriginalAvailable, artMaterialCost, artistCharge,
     isPrintOnDemandAvailable, basePrintCostPerSqFt, isInAmazon, amazonLink,
     otherPlatformListings, soldDetails,
   } = req.body;
 
   try {
-    let artwork = await Artwork.findById(req.params.id)
-        .select('+isDeleted +deletionApprovalStatus');
-    if (!artwork || artwork.isDeleted) {
+    let artwork = await Artwork.findById(req.params.id);
+    if (!artwork) {
       return res.status(404).json({ message: 'Artwork not found' });
     }
 
-    // Update Artwork fields
     artwork.codeNo = codeNo !== undefined ? codeNo : artwork.codeNo;
     artwork.title = title !== undefined ? title : artwork.title;
     artwork.penName = penName !== undefined ? penName : artwork.penName;
@@ -246,7 +222,6 @@ const updateArtwork = async (req, res) => {
     artwork.sellingPrice = sellingPrice !== undefined ? sellingPrice : artwork.sellingPrice;
     artwork.hasParticipatedInCompetition = hasParticipatedInCompetition !== undefined ? hasParticipatedInCompetition : artwork.hasParticipatedInCompetition;
 
-    // Update internal remarks: if new remarks string is provided, add a new remark object
     if (internalRemarks !== undefined) {
         if (internalRemarks.trim() !== '') {
             artwork.internalRemarks.push({ remark: internalRemarks, userId: req.user._id, createdAt: new Date() });
@@ -266,7 +241,6 @@ const updateArtwork = async (req, res) => {
     pricing.lastCalculatedBy = req.user._id;
     pricing.lastCalculationDate = Date.now();
 
-    // Get current/new input values for pricing calculation
     const currentLength = dimensions ? dimensions.length : updatedArtwork.dimensions.length;
     const currentBreadth = dimensions ? dimensions.breadth : updatedArtwork.dimensions.breadth;
     const currentArtMaterialCost = artMaterialCost !== undefined ? artMaterialCost : (pricing.originalPricing ? pricing.originalPricing.artMaterialCost : 0);
@@ -339,103 +313,30 @@ const updateArtwork = async (req, res) => {
   }
 };
 
-// @desc    Request deletion/soft delete an artwork
-// @route   PUT /api/artworks/:id/delete-request
-// @access  Private
-const requestDeleteArtwork = async (req, res) => {
-  const { reason } = req.body; // Reason for deletion request
-
+// @desc    Delete an artwork (hard delete)
+// @route   DELETE /api/artworks/:id
+// @access  Private (Admin role required)
+const deleteArtwork = async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id);
-    if (!artwork) { // Do not check for artwork.isDeleted here, allow re-request if rejected/restored
+    if (!artwork) {
       return res.status(404).json({ message: 'Artwork not found' });
     }
 
-    if (artwork.deletionApprovalStatus === 'pending') {
-        return res.status(400).json({ message: 'Deletion request for this artwork is already pending.' });
-    }
-    if (artwork.deletionApprovalStatus === 'approved') {
-        return res.status(400).json({ message: 'This artwork is already marked for deletion (approved).' });
-    }
+    // Perform hard delete
+    await Artwork.deleteOne({ _id: req.params.id });
+    await Pricing.deleteOne({ artwork: req.params.id }); // Also delete associated pricing
 
-    // Set deletion request details
-    artwork.isDeleted = true; // Mark as deleted (soft delete)
-    artwork.deletionRequestedBy = req.user._id;
-    artwork.deletionRequestedAt = Date.now();
-    artwork.deletionApprovalStatus = 'pending';
-    artwork.deletionReason = reason || 'No reason provided';
-    await artwork.save();
-
-    res.status(200).json({ message: 'Deletion request submitted for artwork', artworkId: artwork._id });
+    res.status(200).json({ message: 'Artwork and associated pricing permanently deleted' });
   } catch (error) {
     handleMongooseError(res, error);
   }
 };
-
-
-// @desc    Approve an artwork deletion request (Admin only)
-// @route   PUT /api/artworks/:id/approve-delete
-// @access  Private (Admin role required)
-const approveArtworkDeletion = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const artwork = await Artwork.findById(id);
-
-        if (!artwork) {
-            return res.status(404).json({ message: 'Artwork not found.' });
-        }
-        if (artwork.deletionApprovalStatus !== 'pending') {
-            return res.status(400).json({ message: 'No pending deletion request for this artwork.' });
-        }
-
-        // PERFORM HARD DELETE (Artwork and associated Pricing)
-        await Artwork.deleteOne({ _id: id });
-        await Pricing.deleteOne({ artwork: id }); // Delete associated pricing
-        
-        res.status(200).json({ message: 'Artwork deletion request approved. Artwork and its pricing permanently deleted.' });
-    } catch (error) {
-        handleMongooseError(res, error);
-    }
-};
-
-// @desc    Reject an artwork deletion request (Admin only)
-// @route   PUT /api/artworks/:id/reject-delete
-// @access  Private (Admin role required)
-const rejectArtworkDeletion = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { adminNotes } = req.body; // Optional notes from admin
-        const artwork = await Artwork.findById(id);
-
-        if (!artwork) {
-            return res.status(404).json({ message: 'Artwork not found.' });
-        }
-        if (artwork.deletionApprovalStatus !== 'pending') {
-            return res.status(400).json({ message: 'No pending deletion request for this artwork.' });
-        }
-
-        // Revert soft delete status
-        artwork.deletionApprovalStatus = 'rejected';
-        artwork.isDeleted = false;
-        artwork.deletionRequestedBy = undefined;
-        artwork.deletionRequestedAt = undefined;
-        artwork.deletionReason = undefined;
-        artwork.internalNotes = artwork.internalNotes ? `${artwork.internalNotes}\nAdmin Action: REJECTED deletion request by ${req.user.username} on ${new Date().toISOString()}. ${adminNotes || ''}` : `Admin Action: REJECTED deletion request by ${req.user.username} on ${new Date().toISOString()}. ${adminNotes || ''}`;
-        
-        await artwork.save();
-        res.status(200).json({ message: 'Artwork deletion request rejected and artwork restored.' });
-    } catch (error) {
-        handleMongooseError(res, error);
-    }
-};
-
 
 module.exports = {
   getArtworks,
   getArtworkById,
   createArtwork,
   updateArtwork,
-  requestDeleteArtwork,
-  approveArtworkDeletion, // Export explicitly
-  rejectArtworkDeletion,  // Export explicitly
+  deleteArtwork, // Export the new delete function
 };

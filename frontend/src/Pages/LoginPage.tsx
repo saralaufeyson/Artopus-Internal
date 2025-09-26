@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, Form, Input, Button, Typography, Space, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../Context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // <-- IMPORT LINK
 
 const { Title, Text } = Typography;
 
@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const onFinish = async (values: any) => { // Use 'any' or define specific login form types
+  const onFinish = async (values: any) => {
     const { email, password } = values;
     const result = await login(email, password);
     if (result.success) {
@@ -88,6 +88,10 @@ const LoginPage: React.FC = () => {
               Log In
             </Button>
           </Form.Item>
+          {/* LINK TO REGISTER PAGE */}
+          <div style={{ textAlign: 'center' }}>
+            <Text>Don't have an account? <Link to="/register">Register now</Link></Text>
+          </div>
         </Form>
       </Card>
     </div>

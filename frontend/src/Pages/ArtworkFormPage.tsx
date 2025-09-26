@@ -8,25 +8,22 @@ import { PictureOutlined, ArrowLeftOutlined, MinusCircleOutlined, PlusOutlined }
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
-import type { Artwork } from '../types/artwork'; // Assuming you have this type
- // Assuming you have this type
-// Assuming you have this type
-import type { Artist } from '../types/artist'; // Assuming you have this type for fetching artists
- // Assuming you have this type for fetching artists
+import type { Artwork } from '../types/artwork';
+import type { Artist } from '../types/artist';
 
 const { Title } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
 const ArtworkFormPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // Will be undefined for new artwork
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { token } = useAuth();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [fetchingArtwork, setFetchingArtwork] = useState<boolean>(true);
-  const [artists, setArtists] = useState<Artist[]>([]); // For artist dropdown
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [fetchingArtists, setFetchingArtists] = useState<boolean>(false);
 
   const isEditing = !!id;
@@ -36,10 +33,10 @@ const ArtworkFormPage: React.FC = () => {
     const fetchArtists = async () => {
       setFetchingArtists(true);
       try {
-        const res = await axios.get<{ artists: Artist[] }>(`http://localhost:5000/api/artists`, {
+        const res = await axios.get<Artist[]>(`http://localhost:5000/api/artists`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setArtists(res.data.artists);
+        setArtists(res.data);
       } catch (error: any) {
         message.error(error.response?.data?.message || 'Failed to fetch artists for dropdown.');
         console.error('Failed to fetch artists:', error);
@@ -74,6 +71,9 @@ const ArtworkFormPage: React.FC = () => {
           dimensionsLength: artwork.dimensions?.length,
           dimensionsBreadth: artwork.dimensions?.breadth,
           dimensionsUnit: artwork.dimensions?.unit,
+          
+          // ✨ FIX: Convert tags array to a comma-separated string for the Input field
+          tags: artwork.tags ? artwork.tags.join(', ') : '',
 
           // Flatten internal remarks (handle undefined safely, map to a single string)
           internalRemarks: artwork.internalRemarks && artwork.internalRemarks.length > 0
@@ -136,6 +136,7 @@ const ArtworkFormPage: React.FC = () => {
         status: values.status,
         noOfDays: values.noOfDays,
         imageUrl: values.imageUrl,
+        // This logic now works because values.tags will always be a string
         tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()) : [],
         sellingPrice: values.sellingPrice,
 
@@ -189,7 +190,7 @@ const ArtworkFormPage: React.FC = () => {
 
 
   // --- Conditional Loading State ---
-  if (fetchingArtwork && isEditing || fetchingArtists) {
+  if ((fetchingArtwork && isEditing) || fetchingArtists) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 200px)' }}>
         <Spin size="large" tip={fetchingArtists ? "Loading artists..." : "Loading artwork details..."} />

@@ -1,5 +1,7 @@
 // frontend/src/types/auth.d.ts
 export interface User {
+  firstName: string;
+  lastName: string;
   _id: string;
   username: string;
   email: string;

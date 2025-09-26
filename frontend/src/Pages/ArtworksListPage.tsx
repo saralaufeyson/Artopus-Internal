@@ -1,21 +1,20 @@
 // frontend/src/pages/ArtworksListPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Breadcrumb, Table, Space, Button, Input, Select, Tag, Popconfirm, message, Spin, type PaginationProps } from 'antd';
+import { Typography, Breadcrumb, Table, Space, Button, Input, Select, Tag, Popconfirm, message, Spin } from 'antd';
 import { PictureOutlined, PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import type { Artwork, ArtworksResponse } from '../types/artwork'; // Import your Artwork types
- // Import your Artwork types
-import { useAuth } from '../Context/AuthContext'; // To get token for authenticated requests
+import type { Artwork, ArtworksResponse, Artist } from '../types/artwork';
+import { useAuth } from '../Context/AuthContext';
 
 const { Title } = Typography;
 const { Option } = Select;
-const { Search } = Input; // Using Ant Design's Input.Search
+const { Search } = Input;
 
 const ArtworksListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { token } = useAuth(); // Get token from AuthContext
+  const { user, token } = useAuth(); // Get user to check roles
 
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,149 +26,107 @@ const ArtworksListPage: React.FC = () => {
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     status: searchParams.get('status') || '',
-    // You can add more filters here, e.g., artist: searchParams.get('artist') || '',
   });
 
   const fetchArtworks = useCallback(async () => {
     setLoading(true);
     try {
-      // Construct query parameters
       const query = new URLSearchParams();
       query.append('page', pagination.current.toString());
       query.append('limit', pagination.pageSize.toString());
       if (filters.search) query.append('search', filters.search);
       if (filters.status) query.append('status', filters.status);
-      // Add other filters as needed
 
       const res = await axios.get<ArtworksResponse>(`http://localhost:5000/api/artworks?${query.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       setArtworks(res.data.artworks);
       setPagination(prev => ({
         ...prev,
-        total: res.data.count,
-        current: res.data.currentPage,
+        total: res.data.total,
+        current: res.data.page,
       }));
     } catch (error: any) {
       console.error('Failed to fetch artworks:', error.response?.data?.message || error.message);
       message.error(error.response?.data?.message || 'Failed to fetch artworks.');
-      // Optionally, redirect to login if 401 Unauthorized
-      if (error.response?.status === 401) {
-        // logout(); // Uncomment if you want to auto-logout on unauthorized access
-        // navigate('/login');
-      }
     } finally {
       setLoading(false);
     }
   }, [pagination.current, pagination.pageSize, filters, token]);
 
   useEffect(() => {
-    // Update URL search params when filters or pagination change
+    fetchArtworks();
+  }, [fetchArtworks]);
+  
+  // Simplified useEffect for search params
+  useEffect(() => {
     const params = new URLSearchParams();
     if (filters.search) params.set('search', filters.search);
     if (filters.status) params.set('status', filters.status);
-    if (pagination.current > 1) params.set('page', pagination.current.toString());
-    if (pagination.pageSize !== 10) params.set('limit', pagination.pageSize.toString());
+    navigate(`?${params.toString()}`, { replace: true });
+  }, [filters, navigate]);
 
-    setSearchParams(params); // Update the URL
-    fetchArtworks(); // Fetch data based on current state
-  }, [filters, pagination.current, pagination.pageSize, fetchArtworks, setSearchParams]);
 
-  // --- Handlers for interactions ---
-  const handleTableChange = (pagination: any) => { // Ant Design Table's pagination type is 'TablePaginationConfig'
+  const handleTableChange = (tablePagination: any) => {
     setPagination(prev => ({
       ...prev,
-      current: pagination.current,
-      pageSize: pagination.pageSize,
+      current: tablePagination.current,
+      pageSize: tablePagination.pageSize,
     }));
   };
 
   const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, search: value, status: '', page: 1 })); // Reset page/status on new search
-    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
-  };
-
-  const handleStatusChange = (value: string) => {
-    setFilters(prev => ({ ...prev, status: value, page: 1 }));
+    setFilters(prev => ({ ...prev, search: value }));
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleAddArtwork = () => {
-    navigate('/artworks/new'); // Navigate to a form for adding new artwork
+  const handleStatusChange = (value: string) => {
+    setFilters(prev => ({ ...prev, status: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleView = (id: string) => {
-    navigate(`/artworks/${id}`);
-  };
+  const handleAddArtwork = () => navigate('/artworks/new');
+  const handleView = (id: string) => navigate(`/artworks/${id}`);
+  const handleEdit = (id: string) => navigate(`/artworks/${id}/edit`);
 
-  const handleEdit = (id: string) => {
-    navigate(`/artworks/${id}/edit`); // Navigate to a form for editing artwork
-  };
-
-  const handleDeleteRequest = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/artworks/${id}/delete-request`, { reason: 'Requested by user' }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.delete(`http://localhost:5000/api/artworks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      message.success('Deletion request submitted successfully!');
+      message.success('Artwork permanently deleted!');
       fetchArtworks(); // Refresh the list
     } catch (error: any) {
-      console.error('Failed to submit deletion request:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to submit deletion request.');
+      console.error('Failed to delete artwork:', error.response?.data?.message || error.message);
+      message.error(error.response?.data?.message || 'Failed to delete artwork.');
     }
   };
 
-  // --- Table Columns ---
   const columns = [
-    {
-      title: 'Code No.',
-      dataIndex: 'codeNo',
-      key: 'codeNo',
-      sorter: true, // Enable sorting if your backend supports it
-    },
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      sorter: true,
-    },
+    { title: 'Code No.', dataIndex: 'codeNo', key: 'codeNo' },
+    { title: 'Title', dataIndex: 'title', key: 'title' },
     {
       title: 'Artist',
-      dataIndex: ['artist', 'name'], // Access nested artist name
+      dataIndex: 'artist',
       key: 'artist',
-      render: (text: string, record: Artwork) => (
-        <a onClick={() => navigate(`/artists/${record.artist._id}`)}>{text}</a>
+      render: (artist: Artist | string) => (
+        typeof artist === 'object' && artist !== null 
+          ? <a onClick={() => navigate(`/artists/${artist._id}`)}>{artist.name}</a>
+          : <span>{String(artist)}</span>
       ),
-      sorter: true,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: Artwork['status']) => {
-        let color;
-        switch (status) {
-          case 'published': color = 'green'; break;
-          case 'in_gallery': color = 'blue'; break;
-          case 'sold': color = 'red'; break;
-          case 'pending': color = 'gold'; break;
-          default: color = 'default';
-        }
-        return <Tag color={color}>{status.toUpperCase().replace('_', ' ')}</Tag>;
-      },
-      sorter: true,
+      render: (status: string) => <Tag color="blue">{status?.toUpperCase().replace('_', ' ')}</Tag>,
     },
     {
       title: 'Price',
       dataIndex: 'sellingPrice',
       key: 'sellingPrice',
-      render: (price?: number) => price ? `€${price.toLocaleString()}` : 'N/A',
-      sorter: true,
+      render: (price?: number) => price ? `₹${price.toLocaleString()}` : 'N/A',
     },
     {
       title: 'Actions',
@@ -178,14 +135,18 @@ const ArtworksListPage: React.FC = () => {
         <Space size="middle">
           <Button icon={<EyeOutlined />} onClick={() => handleView(record._id)} />
           <Button icon={<EditOutlined />} onClick={() => handleEdit(record._id)} />
-          <Popconfirm
-            title="Are you sure to submit deletion request?"
-            onConfirm={() => handleDeleteRequest(record._id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button icon={<DeleteOutlined />} danger disabled={record.isDeleted} />
-          </Popconfirm>
+          {/* Show delete button only to admins */}
+          {user?.roles.includes('admin') && (
+            <Popconfirm
+              title="Permanently delete this artwork?"
+              description="This action cannot be undone."
+              onConfirm={() => handleDelete(record._id)}
+              okText="Yes, Delete"
+              cancelText="No"
+            >
+              <Button icon={<DeleteOutlined />} danger />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -207,7 +168,6 @@ const ArtworksListPage: React.FC = () => {
         <Search
           placeholder="Search by title, code, artist..."
           onSearch={handleSearch}
-          value={filters.search} // Controlled component
           onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
           style={{ width: 300 }}
         />
@@ -215,16 +175,15 @@ const ArtworksListPage: React.FC = () => {
           placeholder="Filter by Status"
           style={{ width: 180 }}
           onChange={handleStatusChange}
-          value={filters.status || undefined} // Ant Design Select needs undefined for no selection
+          value={filters.status || undefined}
           allowClear
         >
-          <Option value="published">Published</Option>
-          <Option value="in_gallery">In Gallery</Option>
+          <Option value="available">Available</Option>
+          <Option value="on_display">On Display</Option>
           <Option value="sold">Sold</Option>
-          <Option value="pending">Pending</Option>
+          <Option value="loaned">Loaned</Option>
           <Option value="archived">Archived</Option>
         </Select>
-        {/* Add more filter options here */}
       </Space>
 
       <Spin spinning={loading}>
@@ -232,16 +191,8 @@ const ArtworksListPage: React.FC = () => {
           columns={columns}
           dataSource={artworks}
           rowKey="_id"
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
-          }}
-          onChange={handleTableChange} // Handle pagination, sorting, filtering changes
-          // rowClassName={(record) => record.isDeleted ? 'artwork-deleted-row' : ''} // Optional: visually mark deleted
+          pagination={{ ...pagination }}
+          onChange={handleTableChange}
         />
       </Spin>
     </div>
