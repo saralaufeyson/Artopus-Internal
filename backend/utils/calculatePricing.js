@@ -4,41 +4,51 @@ const calculatePricing = ({
   lengthInches,
   breadthInches,
   artMaterialCost = 0,
-  artistChargePerDay = 0,
-  noOfDays = 0,
+  artistCharge = 0, // This is the total artist charge, not per day
   packingAndDeliveryCharges = 0,
-  basePrintCostPerSqFt = 0,
+  basePrintCostPerSqFt = 500, // Default 500 per sq ft
   isOriginalAvailable = false,
   isPrintOnDemandAvailable = false,
 }) => {
-  const profitMarginOriginal = 0.20; // 20%
-  const profitMarginPOD = 0.15; // 15%
-  const gstRate = 0.12; // 12%
-  const amazonMarkupRate = 0.25; // 25%
-
   const result = {};
 
-  // Moved calculations inside the function
+  // Calculate square inches and square feet
   const sqInches = lengthInches * breadthInches;
   const sqFeet = sqInches / 144;
 
   // 1. Original Artwork Pricing
   if (isOriginalAvailable) {
     const breakdown = {};
+    
+    // Basic costs
     breakdown.artMaterialCost = artMaterialCost;
-    breakdown.artistChargePerDay = artistChargePerDay;
-    breakdown.noOfDays = noOfDays;
-    breakdown.totalArtistCharge = artistChargePerDay * noOfDays;
+    breakdown.artistCharge = artistCharge; // Total artist charge (not per day)
     breakdown.packingAndDeliveryCharges = packingAndDeliveryCharges;
-    breakdown.rawTotal = breakdown.artMaterialCost + breakdown.totalArtistCharge + breakdown.packingAndDeliveryCharges;
-    breakdown.profitMargin = profitMarginOriginal;
-    breakdown.profitAmount = breakdown.rawTotal * breakdown.profitMargin;
-    breakdown.rawTotalPlusProfit = breakdown.rawTotal + breakdown.profitAmount;
-    breakdown.gstOnProfit = breakdown.rawTotalPlusProfit * gstRate;
-    breakdown.totalWithGST = breakdown.rawTotalPlusProfit + breakdown.gstOnProfit;
+    
+    // Raw Total = Art Material Cost + Artist Charge + Package Total
+    breakdown.rawTotal = breakdown.artMaterialCost + breakdown.artistCharge + breakdown.packingAndDeliveryCharges;
+    
+    // RT (Raw Total) + Profit = Raw Total * 1.3
+    breakdown.rawTotalPlusProfit = breakdown.rawTotal * 1.3;
+    breakdown.profitAmount = breakdown.rawTotalPlusProfit - breakdown.rawTotal;
+    breakdown.profitMargin = 0.30; // 30% profit margin
+    
+    // Profit + GST = Total = RT + Profit * 1.12
+    breakdown.totalWithGST = breakdown.rawTotalPlusProfit * 1.12;
+    breakdown.gstAmount = breakdown.totalWithGST - breakdown.rawTotalPlusProfit;
+    breakdown.gstRate = 0.12; // 12% GST
+    
+    // Grand Total = Profit + GST = Total * 5
+    breakdown.grandTotal = breakdown.totalWithGST * 5;
+    
+    // Print on Amazon (Original) = Grand Total * 0.8
+    breakdown.printOnAmazonOriginal = breakdown.grandTotal * 0.8;
+    
+    // *5 Gallery Price = Main Total / 2 (assuming Main Total = Grand Total for now)
+    breakdown.galleryPrice = breakdown.grandTotal / 2;
     
     result.originalPricing = {
-      galleryPrice: breakdown.totalWithGST * 5, // 5x markup
+      galleryPrice: breakdown.galleryPrice,
       breakdown: breakdown,
     };
   }
@@ -46,27 +56,38 @@ const calculatePricing = ({
   // 2. Print on Demand Pricing
   if (isPrintOnDemandAvailable) {
     const breakdown = {};
-    breakdown.baseCostPerSqFt = basePrintCostPerSqFt;
-    breakdown.printingCost = sqFeet * basePrintCostPerSqFt;
-    breakdown.artistCharge = artistChargePerDay; // Flat artist charge for POD
-    breakdown.rawTotal = breakdown.printingCost + breakdown.artistCharge;
-    breakdown.profitMargin = profitMarginPOD;
-    breakdown.profitAmount = breakdown.rawTotal * breakdown.profitMargin;
-    breakdown.rawTotalPlusProfit = breakdown.rawTotal + breakdown.profitAmount;
-    breakdown.gstOnProfit = breakdown.rawTotalPlusProfit * gstRate;
     
-    const finalPrice = breakdown.rawTotalPlusProfit + breakdown.gstOnProfit;
+    // Step 1: Calculate the base price for different print sizes
+    breakdown.printSmall = sqInches * 0.7 * basePrintCostPerSqFt;
+    breakdown.printBig = sqInches * 2 * basePrintCostPerSqFt;
+    breakdown.printOriginal = sqInches * basePrintCostPerSqFt;
+    
+    // Step 2: Add profit to the base price (30% profit = * 1.3)
+    breakdown.printProfitSmall = breakdown.printSmall * 1.3;
+    breakdown.printProfitBig = breakdown.printBig * 1.3;
+    breakdown.printProfitOriginal = breakdown.printOriginal * 1.3;
+    
+    // Step 3: Add GST to get the final price (12% GST = * 1.12)
+    breakdown.finalPriceSmall = breakdown.printProfitSmall * 1.12;
+    breakdown.finalPriceBig = breakdown.printProfitBig * 1.12;
+    breakdown.finalPriceOriginal = breakdown.printProfitOriginal * 1.12;
+    
+    // Store additional info
+    breakdown.sqInches = sqInches;
+    breakdown.baseCostPerSqFt = basePrintCostPerSqFt;
+    breakdown.profitMargin = 0.30; // 30%
+    breakdown.gstRate = 0.12; // 12%
     
     result.printOnDemandPricing = {
-      originalSizePrice: finalPrice,
-      smallPrice: finalPrice * 0.7, // Example tier
-      largePrice: finalPrice * 1.3, // Example tier
+      smallPrice: breakdown.finalPriceSmall,
+      originalSizePrice: breakdown.finalPriceOriginal,
+      largePrice: breakdown.finalPriceBig,
       breakdown: breakdown,
     };
     
-    // 3. Amazon Listing Price (based on POD)
+    // Amazon listing price based on original print price
     result.amazonListing = {
-      basePriceAmazon: finalPrice * (1 + amazonMarkupRate),
+      basePriceAmazon: breakdown.finalPriceOriginal * 1.25, // 25% markup for Amazon
     };
   }
 
@@ -74,4 +95,3 @@ const calculatePricing = ({
 };
 
 module.exports = calculatePricing;
-

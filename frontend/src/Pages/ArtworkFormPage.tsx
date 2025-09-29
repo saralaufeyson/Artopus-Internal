@@ -88,7 +88,7 @@ const ArtworkFormPage: React.FC = () => {
           // Pricing details
           isOriginalAvailable: pricing?.isOriginalAvailable,
           artMaterialCost: pricing?.originalPricing?.artMaterialCost,
-          artistCharge: pricing?.originalPricing?.artistCharge,
+          artistCharge: pricing?.originalPricing?.artistCharge, // Total artist charge
           packingAndDeliveryCharges: pricing?.originalPricing?.packingAndDeliveryCharges,
           isPrintOnDemandAvailable: pricing?.isPrintOnDemandAvailable,
           basePrintCostPerSqFt: pricing?.printOnDemandPricing?.baseCostPerSqFt,
@@ -145,7 +145,7 @@ const ArtworkFormPage: React.FC = () => {
 
         isOriginalAvailable: values.isOriginalAvailable,
         artMaterialCost: values.artMaterialCost,
-        artistCharge: values.artistCharge,
+        artistCharge: values.artistCharge, // Total artist charge
         packingAndDeliveryCharges: values.packingAndDeliveryCharges,
         isPrintOnDemandAvailable: values.isPrintOnDemandAvailable,
         basePrintCostPerSqFt: values.basePrintCostPerSqFt,
@@ -423,7 +423,7 @@ const ArtworkFormPage: React.FC = () => {
                     <Col span={12}>
                       <Form.Item
                         name="artistCharge"
-                        label="Artist Charge (Per Day, ₹)"
+                        label="Total Artist Charge (₹)"
                         rules={[{ required: true, message: 'Please input artist charge!' }]}
                       >
                         <InputNumber min={0} style={{ width: '100%' }} formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
@@ -488,7 +488,7 @@ const ArtworkFormPage: React.FC = () => {
               return (
                 <Form.Item
                   name="basePrintCostPerSqFt"
-                  label="Base Print Cost Per Sq. Ft. (₹)"
+                  label="Base Print Cost Per Sq. Inch (₹) - Default: 500"
                   rules={[{ required: true, message: 'Please input base print cost!' }]}
                 >
                   <InputNumber min={0} style={{ width: '100%' }} formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />

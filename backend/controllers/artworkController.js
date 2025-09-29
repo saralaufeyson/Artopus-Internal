@@ -97,8 +97,7 @@ const createArtwork = async (req, res) => {
             lengthInches: dimensions.length,
             breadthInches: dimensions.breadth,
             artMaterialCost,
-            artistChargePerDay: artistCharge,
-            noOfDays,
+            artistCharge, // Total artist charge, not per day
             packingAndDeliveryCharges,
             basePrintCostPerSqFt,
             isOriginalAvailable,
@@ -110,8 +109,8 @@ const createArtwork = async (req, res) => {
             lastCalculatedBy: req.user._id,
             isOriginalAvailable,
             isPrintOnDemandAvailable,
-            originalPricing: calculatedPrices.originalPricing,
-            printOnDemandPricing: calculatedPrices.printOnDemandPricing,
+            originalPricing: calculatedPrices.originalPricing?.breakdown,
+            printOnDemandPricing: calculatedPrices.printOnDemandPricing?.breakdown,
             amazonListing: {
               ...calculatedPrices.amazonListing,
               isInAmazon,
@@ -173,8 +172,7 @@ const updateArtwork = async (req, res) => {
             lengthInches: dimensions.length,
             breadthInches: dimensions.breadth,
             artMaterialCost,
-            artistChargePerDay: artistCharge,
-            noOfDays,
+            artistCharge, // Total artist charge
             packingAndDeliveryCharges,
             basePrintCostPerSqFt,
             isOriginalAvailable,
@@ -190,8 +188,8 @@ const updateArtwork = async (req, res) => {
         pricing.lastCalculationDate = new Date();
         pricing.isOriginalAvailable = isOriginalAvailable;
         pricing.isPrintOnDemandAvailable = isPrintOnDemandAvailable;
-        pricing.originalPricing = calculatedPrices.originalPricing;
-        pricing.printOnDemandPricing = calculatedPrices.printOnDemandPricing;
+        pricing.originalPricing = calculatedPrices.originalPricing?.breakdown;
+        pricing.printOnDemandPricing = calculatedPrices.printOnDemandPricing?.breakdown;
         pricing.amazonListing = {
             ...calculatedPrices.amazonListing,
             isInAmazon,
@@ -199,7 +197,6 @@ const updateArtwork = async (req, res) => {
         };
         pricing.otherPlatformListings = otherPlatformListings;
         
-        // ✨ FIX: Removed the line `Object.assign(pricing, req.body);` which was overwriting the calculations.
 
         const updatedPricing = await pricing.save();
 
