@@ -62,6 +62,13 @@ export interface SoldDetails {
 }
 
 export interface OriginalPricing {
+  artistCharge: number | 0;
+  gstAmount: number | 0;
+  grandTotal: number | 0;
+  printOnAmazonOriginal: number | 0;
+  printOnAmazonSmall: any;
+  printOnAmazonBig: any;
+  mainTotal: number | 0;
   artMaterialCost: number;
   artistChargePerDay: number;
   noOfDays: number;
@@ -78,7 +85,17 @@ export interface OriginalPricing {
 }
 
 export interface PrintOnDemandPricing {
-  baseCostPerSqFt: number;
+  sqInches: number | undefined;
+  printSmall: number | undefined;
+  printOriginal: number | undefined;
+  printBig: number | undefined;
+  printProfitSmall: number | undefined;
+  printProfitOriginal: number | undefined;
+  printProfitBig: number | undefined;
+  finalPriceSmall: number | undefined;
+  finalPriceOriginal: number | undefined;
+  finalPriceBig: number | undefined;
+  baseCostPerSqFt: number | undefined;
   printingCost: number;
   artistCharge: number;
   rawTotal: number;
