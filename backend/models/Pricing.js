@@ -23,6 +23,7 @@ const PriceBreakdownItem: React.FC<{ label: string; value?: number; note?: strin
     <Space>
       {label}
       {note && <Tooltip title={note}><InfoCircleOutlined style={{ color: 'rgba(0,0,0,0.45)' }} /></Tooltip>}
+      }
     </Space>
   }>
     ₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -98,7 +99,9 @@ const ArtworkDetailPage: React.FC = () => {
 
       <Card
         title={<Title level={3} style={{ margin: 0 }}>{artwork.title} ({artwork.codeNo})</Title>}
+        }
         extra={<Button icon={<EditOutlined />} onClick={() => navigate(`/artworks/edit/${id}`)}>Edit</Button>}
+        }
       >
         <Row gutter={[32, 16]}>
           <Col xs={24} md={10}>
@@ -122,6 +125,8 @@ const ArtworkDetailPage: React.FC = () => {
               </Descriptions.Item>
               <Descriptions.Item label="Tags">
                 {artwork.tags.length > 0 ? artwork.tags.map(tag => <Tag key={tag}>{tag}</Tag>) : 'No tags'}
+                )
+                }
               </Descriptions.Item>
               <Descriptions.Item label="Days to Create">{artwork.noOfDays || 'N/A'}</Descriptions.Item>
             </Descriptions>
@@ -142,6 +147,7 @@ const ArtworkDetailPage: React.FC = () => {
               <PriceBreakdownItem label="Packing & Delivery" value={originalBreakdown.packingAndDeliveryCharges} />
               <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
                 <Text strong>₹{originalBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+              }
               </Descriptions.Item>
               <PriceBreakdownItem 
                 label={`Profit Margin (${(originalBreakdown.profitMargin || 0) * 100}%)`} 
@@ -149,12 +155,15 @@ const ArtworkDetailPage: React.FC = () => {
               />
                <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
                 <Text strong>₹{originalBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               }
                </Descriptions.Item>
               <PriceBreakdownItem label="GST (12%)" value={originalBreakdown.gstOnProfit} />
               <Descriptions.Item label={<Title level={5}>Total (Before Gallery Markup)</Title>}>
                 <Title level={5}>₹{originalBreakdown.totalWithGST?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
+              }
               </Descriptions.Item>
                 <Descriptions.Item label={<Title level={4}>Final Gallery Price</Title>}>
+                }
                 <Title level={4} style={{ color: '#A36FFF' }}>₹{pricing.originalPricing?.galleryPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
               </Descriptions.Item>
             </Descriptions>
@@ -168,6 +177,7 @@ const ArtworkDetailPage: React.FC = () => {
                <PriceBreakdownItem label="Artist Charge (Flat)" value={podBreakdown.artistCharge} />
                <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
                 <Text strong>₹{podBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               }
                </Descriptions.Item>
               <PriceBreakdownItem 
                 label={`Profit Margin (${(podBreakdown.profitMargin || 0) * 100}%)`} 
@@ -175,10 +185,12 @@ const ArtworkDetailPage: React.FC = () => {
               />
                <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
                 <Text strong>₹{podBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               }
                </Descriptions.Item>
                <PriceBreakdownItem label="GST (12%)" value={podBreakdown.gstOnProfit} />
                <Descriptions.Item label={<Title level={4}>Final Price (Original Size Print)</Title>}>
                 <Title level={4} style={{ color: '#A36FFF' }}>₹{podBreakdown.originalSizePrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
+               }
                </Descriptions.Item>
              </Descriptions>
            </Card>
@@ -190,6 +202,8 @@ const ArtworkDetailPage: React.FC = () => {
             {pricing?.amazonListing?.isInAmazon ? (
               <Link href={pricing.amazonListing.link} target="_blank">{pricing.amazonListing.link}</Link>
             ) : <Text type="secondary">Not listed</Text>}
+            }
+          }
           </Descriptions.Item>
           <Descriptions.Item label={<Space><GlobalOutlined /> Other Platforms</Space>}>
             {pricing?.otherPlatformListings && pricing.otherPlatformListings.length > 0 ? (
@@ -199,6 +213,8 @@ const ArtworkDetailPage: React.FC = () => {
                 renderItem={item => <List.Item><Link href={item.link} target="_blank">{item.platform}</Link></List.Item>}
               />
             ) : <Text type="secondary">Not listed elsewhere</Text>}
+            }
+          }
           </Descriptions.Item>
         </Descriptions>
 
@@ -211,8 +227,10 @@ const ArtworkDetailPage: React.FC = () => {
                 size="small"
                 dataSource={artwork.monitoringItems}
                 renderItem={item => <List.Item>{item}</List.Item>}
+                }
               />
             ) : <Text type="secondary">None</Text>}
+            }
           </Descriptions.Item>
         </Descriptions>
 
@@ -225,6 +243,7 @@ const ArtworkDetailPage: React.FC = () => {
               <List.Item.Meta
                 title={`Remark #${index + 1}`}
                 description={<Paragraph>{item.remark}</Paragraph>}
+                }
               />
               <Text type="secondary">Added on {new Date(item.createdAt).toLocaleDateString()}</Text>
             </List.Item>
