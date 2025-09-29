@@ -2,19 +2,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Typography, Breadcrumb, Spin, message, Row, Col, Card, Tag,
-  Descriptions, Image, Divider, List, Button, Space
+  Descriptions, Image, Divider, List, Button, Space, Tooltip
 } from 'antd';
 import {
-  PictureOutlined, ArrowLeftOutlined, EditOutlined, TagOutlined,
-  CalendarOutlined, NumberOutlined, MoneyCollectOutlined, ShopOutlined,
-  BookOutlined, FormOutlined, GlobalOutlined, AmazonOutlined
+  PictureOutlined, ArrowLeftOutlined, EditOutlined,
+  MoneyCollectOutlined, ShopOutlined, BookOutlined, FormOutlined,
+  GlobalOutlined, AmazonOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
-import type { Artwork, Pricing } from '../types/artwork'; // Import both types
+import type { Artwork, Pricing, Artist } from '../types/artwork';
 
 const { Title, Text, Paragraph, Link } = Typography;
+
+// Helper component for Price Breakdown items - now safer
+const PriceBreakdownItem: React.FC<{ label: string; value?: number; note?: string }> = ({ label, value = 0, note }) => (
+  <Descriptions.Item label={
+    <Space>
+      {label}
+      {note && <Tooltip title={note}><InfoCircleOutlined style={{ color: 'rgba(0,0,0,0.45)' }} /></Tooltip>}
+    </Space>
+  }>
+    ₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+  </Descriptions.Item>
+);
 
 const ArtworkDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -63,18 +75,13 @@ const ArtworkDetailPage: React.FC = () => {
     return <Title level={3}>Artwork not found.</Title>;
   }
 
-  // Helper to render artist name, which might be populated or just an ID
   const renderArtistName = () => {
-    if (
-      typeof artwork.artist === 'object' &&
-      artwork.artist !== null &&
-      '_id' in artwork.artist &&
-      'name' in artwork.artist
-    ) {
-      return <Link onClick={() => navigate(`/artists/${(artwork.artist as any)._id}`)}>{(artwork.artist as any).name}</Link>;
-    }
-    return <Text>ID: {artwork.artist}</Text>;
+    const artist = artwork?.artist as Artist;
+    return <Link onClick={() => navigate(`/artists/${artist._id}`)}>{artist.name}</Link>;
   };
+
+  const originalBreakdown = pricing?.originalPricing;
+  const podBreakdown = pricing?.printOnDemandPricing;
 
   return (
     <div>
@@ -119,32 +126,61 @@ const ArtworkDetailPage: React.FC = () => {
           </Col>
         </Row>
 
-        <Divider orientation="left"><MoneyCollectOutlined /> Pricing & Availability</Divider>
-        <Descriptions bordered column={2} size="small">
-          <Descriptions.Item label="Base Selling Price">
-            <Text strong style={{ color: '#A36FFF' }}>₹{artwork.sellingPrice?.toLocaleString()}</Text>
-          </Descriptions.Item>
-          <Descriptions.Item label="Original Available">
-            {pricing?.isOriginalAvailable ? <Tag color="success">Yes</Tag> : <Tag color="error">No</Tag>}
-          </Descriptions.Item>
+        <Divider orientation="left"><MoneyCollectOutlined /> Pricing Details</Divider>
+        
+        {pricing?.isOriginalAvailable && originalBreakdown && (
+          <Card size="small" type="inner" title="Original Artwork Price Breakdown" style={{ marginBottom: 24 }}>
+            <Descriptions bordered column={1} size="small">
+              <PriceBreakdownItem label="Art Material Cost" value={originalBreakdown.artMaterialCost} />
+              <PriceBreakdownItem 
+                label="Total Artist Charge" 
+                value={originalBreakdown.totalArtistCharge}
+                note={`(₹${originalBreakdown.artistChargePerDay?.toLocaleString()} per day for ${originalBreakdown.noOfDays} days)`}
+              />
+              <PriceBreakdownItem label="Packing & Delivery" value={originalBreakdown.packingAndDeliveryCharges} />
+              <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
+                <Text strong>₹{originalBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+              </Descriptions.Item>
+              <PriceBreakdownItem 
+                label={`Profit Margin (${(originalBreakdown.profitMargin || 0) * 100}%)`} 
+                value={originalBreakdown.profitAmount}
+              />
+               <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
+                <Text strong>₹{originalBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               </Descriptions.Item>
+              <PriceBreakdownItem label="GST (12%)" value={originalBreakdown.gstOnProfit} />
+              <Descriptions.Item label={<Title level={5}>Total (Before Gallery Markup)</Title>}>
+                <Title level={5}>₹{originalBreakdown.totalWithGST?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
+              </Descriptions.Item>
+                <Descriptions.Item label={<Title level={4}>Final Gallery Price</Title>}>
+                <Title level={4} style={{ color: '#A36FFF' }}>₹{pricing.originalPricing?.galleryPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+        )}
 
-          {pricing?.isOriginalAvailable && (
-            <>
-              <Descriptions.Item label="Material Cost">₹{pricing.originalPricing?.artMaterialCost?.toLocaleString() || 0}</Descriptions.Item>
-              <Descriptions.Item label="Artist Charge">₹{pricing.originalPricing?.artistCharge?.toLocaleString() || 0}</Descriptions.Item>
-              <Descriptions.Item label="Gallery Price (Calculated)">₹{pricing.originalPricing?.galleryPrice?.toLocaleString() || 0}</Descriptions.Item>
-            </>
-          )}
-
-          <Descriptions.Item label="Print-on-Demand">
-            {pricing?.isPrintOnDemandAvailable ? <Tag color="success">Yes</Tag> : <Tag color="error">No</Tag>}
-          </Descriptions.Item>
-          {pricing?.isPrintOnDemandAvailable && (
-            <Descriptions.Item label="Base Print Cost (per sq ft)">
-              ₹{pricing.printOnDemandPricing?.baseCostPerSqFt?.toLocaleString() || 0}
-            </Descriptions.Item>
-          )}
-        </Descriptions>
+        {pricing?.isPrintOnDemandAvailable && podBreakdown && (
+           <Card size="small" type="inner" title="Print-on-Demand Price Breakdown (Original Size)">
+             <Descriptions bordered column={1} size="small">
+               <PriceBreakdownItem label="Printing Cost" value={podBreakdown.printingCost} note={`Based on area at ₹${podBreakdown.baseCostPerSqFt}/sq.ft.`} />
+               <PriceBreakdownItem label="Artist Charge (Flat)" value={podBreakdown.artistCharge} />
+               <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
+                <Text strong>₹{podBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               </Descriptions.Item>
+              <PriceBreakdownItem 
+                label={`Profit Margin (${(podBreakdown.profitMargin || 0) * 100}%)`} 
+                value={podBreakdown.profitAmount}
+              />
+               <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
+                <Text strong>₹{podBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+               </Descriptions.Item>
+               <PriceBreakdownItem label="GST (12%)" value={podBreakdown.gstOnProfit} />
+               <Descriptions.Item label={<Title level={4}>Final Price (Original Size Print)</Title>}>
+                <Title level={4} style={{ color: '#A36FFF' }}>₹{podBreakdown.originalSizePrice?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Title>
+               </Descriptions.Item>
+             </Descriptions>
+           </Card>
+        )}
 
         <Divider orientation="left"><ShopOutlined /> Marketplace Listings</Divider>
         <Descriptions bordered column={1} size="small">
@@ -199,3 +235,4 @@ const ArtworkDetailPage: React.FC = () => {
 };
 
 export default ArtworkDetailPage;
+

@@ -35,7 +35,7 @@ function App() {
           components: {
             Layout: {
               siderBg: '#ffffff',
-              headerBg: '#ffffff',
+              headerBg: '#e68ef0ff',
             },
             Menu: {
               itemSelectedBg: 'linear-gradient(to right, #A36FFF, #FF7B8D)',

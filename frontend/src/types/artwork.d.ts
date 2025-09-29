@@ -63,9 +63,15 @@ export interface SoldDetails {
 
 export interface OriginalPricing {
   artMaterialCost: number;
-  artistCharge: number;
+  artistChargePerDay: number;
+  noOfDays: number;
+  totalArtistCharge: number;
+  packingAndDeliveryCharges: number;
   rawTotal: number;
+  profitMargin: number;
+  profitAmount: number;
   rawTotalPlusProfit: number;
+  gstOnProfit: number;
   totalWithGST: number;
   galleryPrice: number;
   soldDetails?: SoldDetails;
@@ -73,16 +79,19 @@ export interface OriginalPricing {
 
 export interface PrintOnDemandPricing {
   baseCostPerSqFt: number;
+  printingCost: number;
+  artistCharge: number;
+  rawTotal: number;
+  profitMargin: number;
+  profitAmount: number;
+  rawTotalPlusProfit: number;
+  gstOnProfit: number;
   smallPrice: number;
   originalSizePrice: number;
   largePrice: number;
 }
 
-export interface AmazonVariation {
-  size: string;
-  price: number;
-}
-
+export interface AmazonVariation { size: string; platformPrice: number; }
 export interface AmazonListing {
   isInAmazon: boolean;
   link?: string;
@@ -92,8 +101,8 @@ export interface AmazonListing {
 
 export interface Pricing {
   _id: string;
-  artwork: string; // Artwork ID
-  lastCalculatedBy: string; // User ID
+  artwork: string;
+  lastCalculatedBy: string;
   lastCalculationDate: Date;
   isOriginalAvailable: boolean;
   isPrintOnDemandAvailable: boolean;
@@ -106,10 +115,7 @@ export interface Pricing {
   __v: number;
 }
 
-
 export type ArtworksResponse = {
-  count: number;
-  currentPage: number;
   artworks: Artwork[];
   page: number;
   pages: number;

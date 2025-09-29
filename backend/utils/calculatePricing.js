@@ -1,74 +1,77 @@
 // backend/utils/calculatePricing.js
 
-const calculatePricing = (
+const calculatePricing = ({
   lengthInches,
   breadthInches,
-  artMaterialCost,
-  artistCharge,
-  basePrintCostPerSqFt // For print on demand
-) => {
-  const profitMarginOriginal = 0.30; // 30% profit on raw total for original
-  const profitMarginPOD = 0.15; // 15% profit on raw total for POD
-  const gstRate = 0.12; // 12% GST
-  const amazonCommissionRate = 0.15; // 15% Amazon commission (example)
+  artMaterialCost = 0,
+  artistChargePerDay = 0,
+  noOfDays = 0,
+  packingAndDeliveryCharges = 0,
+  basePrintCostPerSqFt = 0,
+  isOriginalAvailable = false,
+  isPrintOnDemandAvailable = false,
+}) => {
+  const profitMarginOriginal = 0.20; // 20%
+  const profitMarginPOD = 0.15; // 15%
+  const gstRate = 0.12; // 12%
+  const amazonMarkupRate = 0.25; // 25%
 
-  const pricing = {}; // Object to hold all calculated prices
+  const result = {};
 
-  // 1. Original Artwork Pricing Calculations
-  if (artMaterialCost !== undefined && artistCharge !== undefined) {
-    const sqInches = lengthInches * breadthInches;
-    const sqFeet = sqInches / 144; // Assuming L and B are in inches for area calculation
+  // Moved calculations inside the function
+  const sqInches = lengthInches * breadthInches;
+  const sqFeet = sqInches / 144;
 
-    pricing.originalPricing = {};
-    pricing.originalPricing.artMaterialCost = artMaterialCost;
-    pricing.originalPricing.artistCharge = artistCharge;
-    pricing.originalPricing.rawTotal = artMaterialCost + artistCharge;
-    pricing.originalPricing.rawTotalPlusProfit = pricing.originalPricing.rawTotal * (1 + profitMarginOriginal);
-    pricing.originalPricing.totalWithGST = pricing.originalPricing.rawTotalPlusProfit * (1 + gstRate);
-    pricing.originalPricing.galleryPrice = pricing.originalPricing.totalWithGST * 5; // Example: 5x markup for gallery
+  // 1. Original Artwork Pricing
+  if (isOriginalAvailable) {
+    const breakdown = {};
+    breakdown.artMaterialCost = artMaterialCost;
+    breakdown.artistChargePerDay = artistChargePerDay;
+    breakdown.noOfDays = noOfDays;
+    breakdown.totalArtistCharge = artistChargePerDay * noOfDays;
+    breakdown.packingAndDeliveryCharges = packingAndDeliveryCharges;
+    breakdown.rawTotal = breakdown.artMaterialCost + breakdown.totalArtistCharge + breakdown.packingAndDeliveryCharges;
+    breakdown.profitMargin = profitMarginOriginal;
+    breakdown.profitAmount = breakdown.rawTotal * breakdown.profitMargin;
+    breakdown.rawTotalPlusProfit = breakdown.rawTotal + breakdown.profitAmount;
+    breakdown.gstOnProfit = breakdown.rawTotalPlusProfit * gstRate;
+    breakdown.totalWithGST = breakdown.rawTotalPlusProfit + breakdown.gstOnProfit;
+    
+    result.originalPricing = {
+      galleryPrice: breakdown.totalWithGST * 5, // 5x markup
+      breakdown: breakdown,
+    };
   }
 
-  // 2. Print on Demand Pricing Calculations
-  if (basePrintCostPerSqFt !== undefined) {
-      // This section assumes different print sizes have different "base costs" or are derived from sqFeet
-      // For now, let's base it on input basePrintCostPerSqFt
-      const printSqInches = lengthInches * breadthInches; // Assuming print sizes use original dimensions for base
-      const printSqFeet = printSqInches / 144;
-
-      pricing.printOnDemandPricing = {};
-      pricing.printOnDemandPricing.baseCostPerSqFt = basePrintCostPerSqFt;
-      pricing.printOnDemandPricing.packageTotal = printSqFeet * basePrintCostPerSqFt; // Base cost for original size print
-
-      // Assuming "small", "original size", "large" are based on this packageTotal
-      // These are illustrative, adjust to your actual tiers
-      pricing.printOnDemandPricing.rawTotal = pricing.printOnDemandPricing.packageTotal;
-      pricing.printOnDemandPricing.rtPlusProfit = pricing.printOnDemandPricing.rawTotal * (1 + profitMarginPOD);
-      pricing.printOnDemandPricing.profitPlusGstTotal = pricing.printOnDemandPricing.rtPlusProfit * (1 + gstRate);
-
-      // Example tiers:
-      pricing.printOnDemandPricing.smallPrice = pricing.printOnDemandPricing.profitPlusGstTotal * 0.7; // Smaller print, lower price
-      pricing.printOnDemandPricing.originalSizePrice = pricing.printOnDemandPricing.profitPlusGstTotal; // Base POD price
-      pricing.printOnDemandPricing.largePrice = pricing.printOnDemandPricing.profitPlusGstTotal * 1.3; // Larger print, higher price
+  // 2. Print on Demand Pricing
+  if (isPrintOnDemandAvailable) {
+    const breakdown = {};
+    breakdown.baseCostPerSqFt = basePrintCostPerSqFt;
+    breakdown.printingCost = sqFeet * basePrintCostPerSqFt;
+    breakdown.artistCharge = artistChargePerDay; // Flat artist charge for POD
+    breakdown.rawTotal = breakdown.printingCost + breakdown.artistCharge;
+    breakdown.profitMargin = profitMarginPOD;
+    breakdown.profitAmount = breakdown.rawTotal * breakdown.profitMargin;
+    breakdown.rawTotalPlusProfit = breakdown.rawTotal + breakdown.profitAmount;
+    breakdown.gstOnProfit = breakdown.rawTotalPlusProfit * gstRate;
+    
+    const finalPrice = breakdown.rawTotalPlusProfit + breakdown.gstOnProfit;
+    
+    result.printOnDemandPricing = {
+      originalSizePrice: finalPrice,
+      smallPrice: finalPrice * 0.7, // Example tier
+      largePrice: finalPrice * 1.3, // Example tier
+      breakdown: breakdown,
+    };
+    
+    // 3. Amazon Listing Price (based on POD)
+    result.amazonListing = {
+      basePriceAmazon: finalPrice * (1 + amazonMarkupRate),
+    };
   }
 
-
-  // 3. Amazon Listing Calculations (based on original's totalWithGST or POD's profitPlusGstTotal)
-  // This logic depends on whether Amazon sells originals or prints
-  // Let's assume Amazon primarily sells prints derived from the POD pricing for now.
-  if (pricing.printOnDemandPricing && pricing.printOnDemandPricing.profitPlusGstTotal) {
-      pricing.amazonListing = {};
-      pricing.amazonListing.basePriceAmazon = pricing.printOnDemandPricing.profitPlusGstTotal * (1 + amazonCommissionRate); // `incl amazon`
-      pricing.amazonListing.variations = [
-          { size: 'small', platformPrice: pricing.amazonListing.basePriceAmazon * 0.9 }, // Example reduction
-          { size: 'medium', platformPrice: pricing.amazonListing.basePriceAmazon * 1.15 }, // Example increase
-          { size: 'large', platformPrice: pricing.amazonListing.basePriceAmazon * 1.3 }, // Example increase
-      ];
-  }
-
-  // You would add similar logic for other platforms if needed
-  // pricing.otherPlatformListings = [...]
-
-  return pricing;
+  return result;
 };
 
 module.exports = calculatePricing;
+

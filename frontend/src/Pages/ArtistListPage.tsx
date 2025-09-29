@@ -118,7 +118,7 @@ const ArtistsListPage: React.FC = () => {
   };
 
   const handleEdit = (id: string) => {
-    navigate(`/artists/${id}/edit`);
+    navigate(`/artists/edit/${id}`);
   };
 
   const handleDelete = async (id: string) => {

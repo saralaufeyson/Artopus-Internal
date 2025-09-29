@@ -87,6 +87,7 @@ const ArtworkFormPage: React.FC = () => {
           isOriginalAvailable: pricing?.isOriginalAvailable,
           artMaterialCost: pricing?.originalPricing?.artMaterialCost,
           artistCharge: pricing?.originalPricing?.artistCharge,
+          packingAndDeliveryCharges: pricing?.originalPricing?.packingAndDeliveryCharges,
           isPrintOnDemandAvailable: pricing?.isPrintOnDemandAvailable,
           basePrintCostPerSqFt: pricing?.printOnDemandPricing?.baseCostPerSqFt,
           isInAmazon: pricing?.amazonListing?.isInAmazon,
@@ -143,6 +144,7 @@ const ArtworkFormPage: React.FC = () => {
         isOriginalAvailable: values.isOriginalAvailable,
         artMaterialCost: values.artMaterialCost,
         artistCharge: values.artistCharge,
+        packingAndDeliveryCharges: values.packingAndDeliveryCharges,
         isPrintOnDemandAvailable: values.isPrintOnDemandAvailable,
         basePrintCostPerSqFt: values.basePrintCostPerSqFt,
         isInAmazon: values.isInAmazon,
@@ -419,13 +421,19 @@ const ArtworkFormPage: React.FC = () => {
                     <Col span={12}>
                       <Form.Item
                         name="artistCharge"
-                        label="Artist Charge (₹)"
+                        label="Artist Charge (Per Day, ₹)"
                         rules={[{ required: true, message: 'Please input artist charge!' }]}
                       >
                         <InputNumber min={0} style={{ width: '100%' }} formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                       </Form.Item>
                     </Col>
                   </Row>
+                  <Form.Item
+                    name="packingAndDeliveryCharges"
+                    label="Packing & Delivery Charges (₹)"
+                  >
+                    <InputNumber min={0} style={{ width: '100%' }} formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
+                  </Form.Item>
                   <Title level={5}>Original Sold Details</Title>
                   <Form.Item name="isSold" valuePropName="checked">
                       <Checkbox>Original is Sold</Checkbox>
