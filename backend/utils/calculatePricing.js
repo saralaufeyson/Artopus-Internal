@@ -22,7 +22,7 @@ const calculatePricing = ({
     
     // Basic costs
     breakdown.artMaterialCost = artMaterialCost;
-    breakdown.artistCharge = artistCharge; // Total artist charge (not per day)
+    breakdown.artistCharge = artistCharge; // Total artist charge
     breakdown.packingAndDeliveryCharges = packingAndDeliveryCharges;
     
     // Raw Total = Art Material Cost + Artist Charge + Package Total
@@ -44,18 +44,25 @@ const calculatePricing = ({
     // Print on Amazon (Original) = Grand Total * 0.8
     breakdown.printOnAmazonOriginal = breakdown.grandTotal * 0.8;
     
-    // *5 Gallery Price = Main Total / 2 (assuming Main Total = Grand Total for now)
-    breakdown.galleryPrice = breakdown.grandTotal / 2;
+    // Main Total = Grand Total + Print on Amazon (Small) + Print on Amazon (Big)
+    // Note: We'll calculate Print on Amazon Small/Big from print-on-demand if available
+    breakdown.mainTotal = breakdown.grandTotal; // Will be updated if print-on-demand is available
     
-    result.originalPricing = {
-      galleryPrice: breakdown.galleryPrice,
-      breakdown: breakdown,
-    };
+    // *5 Gallery Price = Main Total / 2
+    breakdown.galleryPrice = breakdown.mainTotal / 2;
+    
+    result.originalPricing = breakdown;
   }
 
   // 2. Print on Demand Pricing
   if (isPrintOnDemandAvailable) {
     const breakdown = {};
+    
+    // Store basic info
+    breakdown.sqInches = sqInches;
+    breakdown.baseCostPerSqFt = basePrintCostPerSqFt;
+    breakdown.profitMargin = 0.30; // 30%
+    breakdown.gstRate = 0.12; // 12%
     
     // Step 1: Calculate the base price for different print sizes
     breakdown.printSmall = sqInches * 0.7 * basePrintCostPerSqFt;
@@ -72,18 +79,30 @@ const calculatePricing = ({
     breakdown.finalPriceBig = breakdown.printProfitBig * 1.12;
     breakdown.finalPriceOriginal = breakdown.printProfitOriginal * 1.12;
     
-    // Store additional info
-    breakdown.sqInches = sqInches;
-    breakdown.baseCostPerSqFt = basePrintCostPerSqFt;
-    breakdown.profitMargin = 0.30; // 30%
-    breakdown.gstRate = 0.12; // 12%
+    // Legacy field mappings for compatibility
+    breakdown.smallPrice = breakdown.finalPriceSmall;
+    breakdown.originalSizePrice = breakdown.finalPriceOriginal;
+    breakdown.largePrice = breakdown.finalPriceBig;
     
-    result.printOnDemandPricing = {
-      smallPrice: breakdown.finalPriceSmall,
-      originalSizePrice: breakdown.finalPriceOriginal,
-      largePrice: breakdown.finalPriceBig,
-      breakdown: breakdown,
-    };
+    // Calculate printing cost and artist charge for display
+    breakdown.printingCost = breakdown.printOriginal;
+    breakdown.artistCharge = 0; // No separate artist charge for prints
+    breakdown.rawTotal = breakdown.printOriginal;
+    breakdown.profitAmount = breakdown.printProfitOriginal - breakdown.printOriginal;
+    breakdown.rawTotalPlusProfit = breakdown.printProfitOriginal;
+    breakdown.gstOnProfit = breakdown.finalPriceOriginal - breakdown.printProfitOriginal;
+    
+    result.printOnDemandPricing = breakdown;
+    
+    // Update Main Total in original pricing if both are available
+    if (result.originalPricing) {
+      result.originalPricing.printOnAmazonSmall = breakdown.finalPriceSmall * 0.8;
+      result.originalPricing.printOnAmazonBig = breakdown.finalPriceBig * 0.8;
+      result.originalPricing.mainTotal = result.originalPricing.grandTotal + 
+        result.originalPricing.printOnAmazonSmall + 
+        result.originalPricing.printOnAmazonBig;
+      result.originalPricing.galleryPrice = result.originalPricing.mainTotal / 2;
+    }
     
     // Amazon listing price based on original print price
     result.amazonListing = {
