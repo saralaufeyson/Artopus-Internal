@@ -4,6 +4,7 @@ import {
   Typography, Breadcrumb, Button, Form, Input, Select, Space, message,
   Spin, Image, Row, Col, Checkbox, InputNumber, Divider, Tag
 } from 'antd';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import { PictureOutlined, ArrowLeftOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -20,6 +21,7 @@ const ArtworkFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { token } = useAuth();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [loading, setLoading] = useState<boolean>(false);
   const [fetchingArtwork, setFetchingArtwork] = useState<boolean>(true);
@@ -38,7 +40,7 @@ const ArtworkFormPage: React.FC = () => {
         });
         setArtists(res.data);
       } catch (error: any) {
-        message.error(error.response?.data?.message || 'Failed to fetch artists for dropdown.');
+        showNotification('error', error.response?.data?.message || 'Failed to fetch artists for dropdown.');
         console.error('Failed to fetch artists:', error);
       } finally {
         setFetchingArtists(false);
@@ -103,7 +105,7 @@ const ArtworkFormPage: React.FC = () => {
         };
         form.setFieldsValue(formData);
       } catch (error: any) {
-        message.error(error.response?.data?.message || 'Failed to fetch artwork details.');
+        showNotification('error', error.response?.data?.message || 'Failed to fetch artwork details.');
         console.error('Failed to fetch artwork:', error);
         navigate('/artworks');
       } finally {
@@ -117,7 +119,7 @@ const ArtworkFormPage: React.FC = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     if (!token) {
-      message.error("Authentication required.");
+      showNotification('error', 'Authentication required. Please log in.');
       setLoading(false);
       return;
     }
@@ -173,18 +175,18 @@ const ArtworkFormPage: React.FC = () => {
         response = await axios.put(`http://localhost:5000/api/artworks/${id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        message.success('Artwork updated successfully!');
+        showNotification('success', 'Artwork updated successfully!');
       } else {
         response = await axios.post(`http://localhost:5000/api/artworks`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        message.success('Artwork added successfully!');
+        showNotification('success', 'Artwork added successfully!');
       }
       console.log('Artwork saved/updated:', response.data);
       navigate('/artworks');
     } catch (error: any) {
       console.error('Failed to save artwork:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to save artwork.');
+      showNotification('error', error.response?.data?.message || 'Failed to save artwork.');
     } finally {
       setLoading(false);
     }

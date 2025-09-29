@@ -4,6 +4,7 @@ import { Card, Form, Input, Button, Typography, Space, message, Select } from 'a
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -11,6 +12,7 @@ const { Option } = Select;
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const onFinish = async (values: any) => {
     const { username, email, password, firstName, lastName, roles } = values;
@@ -23,11 +25,11 @@ const RegisterPage: React.FC = () => {
         lastName,
         roles,
       });
-      message.success('Registration successful! Please log in.');
+      showNotification('success', 'Registration successful! Please log in with your credentials.');
       navigate('/login');
     } catch (error: any) {
       console.error('Registration failed:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Registration failed.');
+      showNotification('error', error.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 

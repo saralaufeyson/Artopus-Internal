@@ -7,6 +7,7 @@ import {
 import { UserOutlined, ArrowLeftOutlined, InstagramOutlined, GlobalOutlined, MailOutlined, PhoneOutlined, PictureOutlined, EyeOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import { useAuth } from '../Context/AuthContext';
 import type { Artist } from '../types/artist';
 import type { Artwork, ArtworksResponse } from '../types/artwork';
@@ -17,6 +18,7 @@ const ArtistDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -24,7 +26,7 @@ const ArtistDetailPage: React.FC = () => {
 
   const fetchArtistDetails = useCallback(async () => {
     if (!id || !token) {
-      message.error("Artist ID is missing or you are not authenticated.");
+      showNotification('error', 'Artist ID is missing or you are not authenticated.');
       setLoading(false);
       return;
     }
@@ -45,7 +47,7 @@ const ArtistDetailPage: React.FC = () => {
 
     } catch (error: any) {
       console.error('Failed to fetch artist details:', error);
-      message.error(error.response?.data?.message || 'Failed to load artist details.');
+      showNotification('error', error.response?.data?.message || 'Failed to load artist details.');
       navigate('/artists'); // Redirect if artist not found
     } finally {
       setLoading(false);

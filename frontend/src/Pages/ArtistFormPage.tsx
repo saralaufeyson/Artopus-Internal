@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, Breadcrumb, Button, Form, Input, Select, Space, message, Spin, Image, Row, Col } from 'antd';
 import { UserOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
 import type { Artist } from '../types/artist'; // Use Artist type
@@ -17,6 +18,7 @@ const ArtistFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { token } = useAuth();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [loading, setLoading] = useState<boolean>(false);
   const [fetchingArtist, setFetchingArtist] = useState<boolean>(true);
@@ -48,7 +50,7 @@ const ArtistFormPage: React.FC = () => {
         };
         form.setFieldsValue(artistData);
       } catch (error: any) {
-        message.error(error.response?.data?.message || 'Failed to fetch artist details.');
+        showNotification('error', error.response?.data?.message || 'Failed to fetch artist details.');
         console.error('Failed to fetch artist:', error);
         navigate('/artists'); // Redirect if artist not found
       } finally {
@@ -63,7 +65,7 @@ const ArtistFormPage: React.FC = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     if (!token) {
-      message.error("Authentication required.");
+      showNotification('error', 'Authentication required. Please log in.');
       setLoading(false);
       return;
     }
@@ -93,18 +95,18 @@ const ArtistFormPage: React.FC = () => {
         response = await axios.put(`http://localhost:5000/api/artists/${id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        message.success('Artist updated successfully!');
+        showNotification('success', 'Artist updated successfully!');
       } else {
         response = await axios.post(`http://localhost:5000/api/artists`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        message.success('Artist added successfully!');
+        showNotification('success', 'Artist added successfully!');
       }
       console.log('Artist saved/updated:', response.data);
       navigate('/artists'); // Go back to the artists list
     } catch (error: any) {
       console.error('Failed to save artist:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to save artist.');
+      showNotification('error', error.response?.data?.message || 'Failed to save artist.');
     } finally {
       setLoading(false);
     }

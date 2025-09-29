@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Breadcrumb, Row, Col, Card, Statistic, Spin, List, Tag, message, Space, Button } from 'antd';
 import { HomeOutlined, UserOutlined, PictureOutlined, EyeOutlined } from '@ant-design/icons';
 import { useAuth } from '../Context/AuthContext';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import axios from 'axios';
 import type { Artwork, ArtworksResponse, Artist } from '../types/artwork';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ interface DashboardStats {
 const DashboardPage: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [loading, setLoading] = useState<boolean>(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -26,7 +28,7 @@ const DashboardPage: React.FC = () => {
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     if (!token) {
-      message.error("Authentication required.");
+      showNotification('error', 'Authentication required. Please log in.');
       setLoading(false);
       navigate('/login');
       return;
@@ -56,7 +58,7 @@ const DashboardPage: React.FC = () => {
 
     } catch (error: any) {
       console.error('Failed to fetch dashboard data:', error.response?.data?.message || error.message, error);
-      message.error(error.response?.data?.message || 'Failed to load dashboard data.');
+      showNotification('error', error.response?.data?.message || 'Failed to load dashboard data.');
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Add
 import { Typography, Breadcrumb, Table, Space, Button, Input, Tag, Popconfirm, message, Spin } from 'antd';
 import { UserOutlined, PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import axios from 'axios';
 import type { Artist, ArtistsResponse } from '../types/artist'; // Import your Artist types
 import { useAuth } from '../Context/AuthContext';
@@ -14,6 +15,7 @@ const ArtistsListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuth();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [allArtists, setAllArtists] = useState<Artist[]>([]); // Store all fetched artists
   const [loading, setLoading] = useState<boolean>(true);
@@ -34,7 +36,7 @@ const ArtistsListPage: React.FC = () => {
 
       if (!token) {
         console.error("No token found. User might not be authenticated.");
-        message.error("Authentication required. Please log in.");
+        showNotification('error', 'Authentication required. Please log in.');
         setLoading(false);
         navigate('/login');
         return;
@@ -55,7 +57,7 @@ const ArtistsListPage: React.FC = () => {
       }));
     } catch (error: any) {
       console.error('Failed to fetch artists:', error.response?.data?.message || error.message, error);
-      message.error(error.response?.data?.message || 'Failed to fetch artists.');
+      showNotification('error', error.response?.data?.message || 'Failed to fetch artists.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +126,7 @@ const ArtistsListPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       if (!token) {
-        message.error("Authentication required to delete an artist.");
+        showNotification('error', 'Authentication required to delete an artist.');
         return;
       }
 
@@ -133,12 +135,12 @@ const ArtistsListPage: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      message.success('Artist deleted successfully!');
+      showNotification('success', 'Artist deleted successfully!');
       // After deletion, refetch ALL artists to ensure consistency
       fetchAllArtists();
     } catch (error: any) {
       console.error('Failed to delete artist:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to delete artist.');
+      showNotification('error', error.response?.data?.message || 'Failed to delete artist.');
     }
   };
 

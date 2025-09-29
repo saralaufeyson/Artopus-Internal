@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Breadcrumb, Table, Space, Button, Input, Select, Tag, Popconfirm, message, Spin } from 'antd';
 import { PictureOutlined, PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import axios from 'axios';
 import type { Artwork, ArtworksResponse, Artist } from '../types/artwork';
 import { useAuth } from '../Context/AuthContext';
@@ -15,6 +16,7 @@ const ArtworksListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth(); // Get user to check roles
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -49,7 +51,7 @@ const ArtworksListPage: React.FC = () => {
       }));
     } catch (error: any) {
       console.error('Failed to fetch artworks:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to fetch artworks.');
+      showNotification('error', error.response?.data?.message || 'Failed to fetch artworks.');
     } finally {
       setLoading(false);
     }
@@ -95,11 +97,11 @@ const ArtworksListPage: React.FC = () => {
       await axios.delete(`http://localhost:5000/api/artworks/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      message.success('Artwork permanently deleted!');
+      showNotification('success', 'Artwork permanently deleted!');
       fetchArtworks(); // Refresh the list
     } catch (error: any) {
       console.error('Failed to delete artwork:', error.response?.data?.message || error.message);
-      message.error(error.response?.data?.message || 'Failed to delete artwork.');
+      showNotification('error', error.response?.data?.message || 'Failed to delete artwork.');
     }
   };
 

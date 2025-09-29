@@ -12,6 +12,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 import type { Artwork, Pricing, Artist } from '../types/artwork';
 
 const { Title, Text, Paragraph, Link } = Typography;
@@ -32,6 +33,7 @@ const ArtworkDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { showNotification } = useNotification(); // Use notification hook
 
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [pricing, setPricing] = useState<Pricing | null>(null);
@@ -52,7 +54,7 @@ const ArtworkDetailPage: React.FC = () => {
       setPricing(response.data.pricing);
     } catch (error: any) {
       console.error('Failed to fetch artwork details:', error);
-      message.error(error.response?.data?.message || 'Failed to load artwork details.');
+      showNotification('error', error.response?.data?.message || 'Failed to load artwork details.');
       navigate('/artworks');
     } finally {
       setLoading(false);

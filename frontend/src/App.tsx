@@ -15,6 +15,7 @@ import ArtistFormPage from '../src/Pages/ArtistFormPage'; // <-- Imported
 import ArtworkFormPage from '../src/Pages/ArtworkFormPage'; // <-- Imported
 import ReportsPage from '../src/Pages/ReportsPage'; // <-- IMPORT THE NEW PAGE
 import RegisterPage from '../src/Pages/RegisterPage';
+import NotificationContainer from '../src/Components/NotificationContainer'; // Import NotificationContainer
 
 import AppLayout from '../src/Components/AppLayout';
 
@@ -97,6 +98,7 @@ function App() {
           </Route>
         </Routes>
       </ConfigProvider>
+      <NotificationContainer /> {/* Add NotificationContainer */}
     </Router>
   );
 }

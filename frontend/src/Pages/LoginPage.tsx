@@ -4,12 +4,14 @@ import { Card, Form, Input, Button, Typography, Space, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../Context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom'; // <-- IMPORT LINK
+import { useNotification } from '../Context/NotificationContext'; // Import useNotification
 
 const { Title, Text } = Typography;
 
 const LoginPage: React.FC = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showNotification } = useNotification(); // Use notification hook
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -21,10 +23,10 @@ const LoginPage: React.FC = () => {
     const { email, password } = values;
     const result = await login(email, password);
     if (result.success) {
-      message.success('Login successful!');
+      showNotification('success', 'Login successful! Welcome back.');
       navigate('/dashboard', { replace: true });
     } else {
-      message.error(result.message || 'Login failed.');
+      showNotification('error', result.message || 'Login failed. Please check your credentials.');
     }
   };
 
