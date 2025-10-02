@@ -97,16 +97,17 @@ const createArtwork = async (req, res) => {
 
     const createdArtwork = await artwork.save();
 
+    // Always create pricing data, even with default values
     const pricingInput = {
       lengthInches: body.dimensions.length,
       breadthInches: body.dimensions.breadth,
-      artMaterialCost: body.artMaterialCost || 0,
-      artistCharge: body.artistCharge || 0,
+      artMaterialCost: body.artMaterialCost || 1000, // Default material cost
+      artistCharge: body.artistCharge || 2000, // Default artist charge
       noOfDays: body.noOfDays || 0,
-      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 0,
+      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500, // Default packing cost
       baseCostPerSqFt: body.basePrintCostPerSqFt || 500, // Default to 500 as per your formula
-      isOriginalAvailable: body.isOriginalAvailable,
-      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable,
+      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true, // Default to true
+      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : true, // Default to true
       soldDetails: body.soldDetails,
     };
 
@@ -118,16 +119,17 @@ const createArtwork = async (req, res) => {
       ...calculatedPrices,
       amazonListing: {
         ...calculatedPrices.amazonListing,
-        isInAmazon: body.isInAmazon,
+        isInAmazon: body.isInAmazon || false,
         link: body.amazonLink,
       },
-      otherPlatformListings: body.otherPlatformListings,
+      otherPlatformListings: body.otherPlatformListings || [],
     });
 
     await pricing.save();
 
     res.status(201).json({ artwork: createdArtwork, pricing });
   } catch (error) {
+    console.error('Error creating artwork:', error);
     handleMongooseError(res, error);
   }
 };
@@ -173,16 +175,17 @@ const updateArtwork = async (req, res) => {
       pricing = new Pricing({ artwork: artwork._id });
     }
 
+    // Always ensure we have pricing data with defaults
     const pricingInput = {
       lengthInches: body.dimensions.length,
       breadthInches: body.dimensions.breadth,
-      artMaterialCost: body.artMaterialCost || 0,
-      artistCharge: body.artistCharge || 0,
+      artMaterialCost: body.artMaterialCost || 1000, // Default material cost
+      artistCharge: body.artistCharge || 2000, // Default artist charge
       noOfDays: body.noOfDays || 0,
-      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 0,
+      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500, // Default packing cost
       baseCostPerSqFt: body.basePrintCostPerSqFt || 500, // Default to 500 as per your formula
-      isOriginalAvailable: body.isOriginalAvailable,
-      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable,
+      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true, // Default to true
+      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : true, // Default to true
       soldDetails: body.soldDetails,
     };
 
@@ -194,16 +197,17 @@ const updateArtwork = async (req, res) => {
       ...calculatedPrices,
       amazonListing: {
         ...calculatedPrices.amazonListing,
-        isInAmazon: body.isInAmazon,
+        isInAmazon: body.isInAmazon || false,
         link: body.amazonLink,
       },
-      otherPlatformListings: body.otherPlatformListings,
+      otherPlatformListings: body.otherPlatformListings || [],
     });
 
     const updatedPricing = await pricing.save();
 
     res.status(200).json({ artwork: updatedArtwork, pricing: updatedPricing });
   } catch (error) {
+    console.error('Error updating artwork:', error);
     handleMongooseError(res, error);
   }
 };
