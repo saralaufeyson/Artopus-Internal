@@ -31,6 +31,7 @@ const ArtworkDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { showNotification } = useNotification();
 
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [pricing, setPricing] = useState<Pricing | null>(null);
@@ -50,10 +51,8 @@ const ArtworkDetailPage: React.FC = () => {
       setArtwork(response.data.artwork);
       setPricing(response.data.pricing || null);
       
-      // If no pricing data exists, show a warning
-      if (!response.data.pricing) {
-        showNotification('warning', 'No pricing data found for this artwork. Please edit the artwork to add pricing details.');
-      }
+      console.log('Artwork data:', response.data.artwork);
+      console.log('Pricing data:', response.data.pricing);
     } catch (error: any) {
       console.error('Failed to fetch artwork details:', error);
       showNotification('error', error.response?.data?.message || 'Failed to load artwork details.');
@@ -138,115 +137,143 @@ const ArtworkDetailPage: React.FC = () => {
         </Row>
 
         <Divider orientation="left"><MoneyCollectOutlined /> Pricing Details</Divider>
-      <Divider orientation="left"><MoneyCollectOutlined /> Pricing Details</Divider>
-      
-      {!pricing ? (
-        <Card style={{ marginBottom: 24 }}>
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <Text type="secondary" style={{ fontSize: '16px' }}>
-              No pricing data available for this artwork.
-            </Text>
-            <br />
-            <Button 
-              type="primary" 
-              style={{ marginTop: 16 }}
-              onClick={() => navigate(`/artworks/edit/${id}`)}
-            >
-              Edit Artwork to Add Pricing
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <>
-          {pricing.isOriginalAvailable && originalBreakdown && (
-            <Card size="small" type="inner" title="Original Artwork Price Breakdown" style={{ marginBottom: 24 }}>
-              <Descriptions bordered column={1} size="small">
-                <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Base Costs</Title>
-                <PriceBreakdownItem label="Art Material Cost" value={originalBreakdown.artMaterialCost} />
-                <PriceBreakdownItem label="Artist Charge" value={originalBreakdown.artistCharge} />
-                <PriceBreakdownItem label="Packing & Delivery Charges" value={originalBreakdown.packingAndDeliveryCharges} />
-                <Descriptions.Item label={<Text strong>Raw Total</Text>}>
-                  <Text strong style={{ color: '#1890ff' }}>₹{originalBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                </Descriptions.Item>
-                
-                <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
-                <Descriptions.Item label={<Text strong>RT + Profit (Raw Total × 1.3)</Text>}>
-                  <Text strong style={{ color: '#52c41a' }}>₹{originalBreakdown.rtPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                </Descriptions.Item>
-                
-                <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Add GST (12%)</Title>
-                <Descriptions.Item label={<Text strong>Total (RT + Profit × 1.12)</Text>}>
-                  <Text strong style={{ color: '#fa8c16' }}>₹{originalBreakdown.total?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                </Descriptions.Item>
-                
-                <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 4: Gallery Markup (×5)</Title>
-                <Descriptions.Item label={<Text strong>Grand Total (Total × 5)</Text>}>
-                  <Text strong style={{ color: '#722ed1' }}>₹{originalBreakdown.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                </Descriptions.Item>
-                
-                <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 5: Amazon Print Calculations</Title>
-                <PriceBreakdownItem label="Print on Amazon (Original) - Grand Total × 0.8" value={originalBreakdown.printOnAmazonOriginal} />
-                <PriceBreakdownItem label="Print on Amazon (Small)" value={originalBreakdown.printOnAmazonSmall} />
-                <PriceBreakdownItem label="Print on Amazon (Big)" value={originalBreakdown.printOnAmazonBig} />
-                
-                <Descriptions.Item label={<Text strong>Main Total</Text>}>
-                  <Text strong style={{ color: '#13c2c2' }}>₹{originalBreakdown.mainTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                </Descriptions.Item>
-                
-                <Descriptions.Item label={<Title level={4}>*5 Gallery Price (Main Total ÷ 2)</Title>}>
-                  <Title level={4} style={{ color: '#A36FFF', fontSize: '24px' }}>₹{originalBreakdown.galleryPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          )}
 
-          {pricing.isPrintOnDemandAvailable && podBreakdown && (
-             <Card size="small" type="inner" title="Print-on-Demand Price Breakdown" style={{ marginBottom: 24 }}>
-               <Descriptions bordered column={1} size="small">
-                 <Descriptions.Item label="Square Inches">
-                   <Text strong>{podBreakdown.sqInches?.toLocaleString()} sq inches</Text>
-                 </Descriptions.Item>
-                 <Descriptions.Item label="Base Cost Per Sq Inch">
-                   <Text>₹{podBreakdown.baseCostPerSqFt?.toLocaleString()}</Text>
-                 </Descriptions.Item>
-                 
-                 <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Calculate Base Prices</Title>
-                 <PriceBreakdownItem 
-                   label="Print Small (sq × 0.7 × 500)" 
-                   value={podBreakdown.printSmall}
-                   note={`${podBreakdown.sqInches} × 0.7 × 500`}
-                 />
-                 <PriceBreakdownItem 
-                   label="Print Original (sq × 500)" 
-                   value={podBreakdown.printOriginal}
-                   note={`${podBreakdown.sqInches} × 500`}
-                 />
-                 <PriceBreakdownItem 
-                   label="Print Big (sq × 2 × 500)" 
-                   value={podBreakdown.printBig}
-                   note={`${podBreakdown.sqInches} × 2 × 500`}
-                 />
-                 
-                 <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
-                 <PriceBreakdownItem label="Print Profit Small (× 1.3)" value={podBreakdown.printProfitSmall} />
-                 <PriceBreakdownItem label="Print Profit Original (× 1.3)" value={podBreakdown.printProfitOriginal} />
-                 <PriceBreakdownItem label="Print Profit Big (× 1.3)" value={podBreakdown.printProfitBig} />
-                 
-                 <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Final Prices with GST (12%)</Title>
-                 <Descriptions.Item label={<Title level={5}>Final Price Small (× 1.12)</Title>}>
-                   <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.finalPriceSmall?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
-                 </Descriptions.Item>
-                 <Descriptions.Item label={<Title level={4}>Final Price Original (× 1.12)</Title>}>
-                   <Title level={4} style={{ color: '#A36FFF', fontSize: '20px' }}>₹{podBreakdown.finalPriceOriginal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
-                 </Descriptions.Item>
-                 <Descriptions.Item label={<Title level={5}>Final Price Big (× 1.12)</Title>}>
-                   <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.finalPriceBig?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
-                 </Descriptions.Item>
-               </Descriptions>
-             </Card>
-          )}
-        </>
-      )}
+        {/* Always show pricing section, but handle missing data gracefully */}
+        {!pricing ? (
+          <Card style={{ marginBottom: 24 }}>
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <Text type="secondary" style={{ fontSize: '16px' }}>
+                No pricing data available for this artwork.
+              </Text>
+              <br />
+              <Button 
+                type="primary" 
+                style={{ marginTop: 16 }}
+                onClick={() => navigate(`/artworks/edit/${id}`)}
+              >
+                Edit Artwork to Add Pricing
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <>
+            {/* Original Artwork Pricing */}
+            {pricing.isOriginalAvailable && originalBreakdown ? (
+              <Card size="small" type="inner" title="Original Artwork Price Breakdown" style={{ marginBottom: 24 }}>
+                <Descriptions bordered column={1} size="small">
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Base Costs</Title>
+                  <PriceBreakdownItem label="Art Material Cost" value={originalBreakdown.artMaterialCost || 0} />
+                  <PriceBreakdownItem label="Artist Charge" value={originalBreakdown.artistCharge || 0} />
+                  <PriceBreakdownItem label="Packing & Delivery Charges" value={originalBreakdown.packingAndDeliveryCharges || 0} />
+                  <Descriptions.Item label={<Text strong>Raw Total</Text>}>
+                    <Text strong style={{ color: '#1890ff' }}>₹{(originalBreakdown.rawTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                  </Descriptions.Item>
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
+                  <Descriptions.Item label={<Text strong>RT + Profit (Raw Total × 1.3)</Text>}>
+                    <Text strong style={{ color: '#52c41a' }}>₹{(originalBreakdown.rtPlusProfit || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                  </Descriptions.Item>
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Add GST (12%)</Title>
+                  <Descriptions.Item label={<Text strong>Total (RT + Profit × 1.12)</Text>}>
+                    <Text strong style={{ color: '#fa8c16' }}>₹{(originalBreakdown.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                  </Descriptions.Item>
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 4: Gallery Markup (×5)</Title>
+                  <Descriptions.Item label={<Text strong>Grand Total (Total × 5)</Text>}>
+                    <Text strong style={{ color: '#722ed1' }}>₹{(originalBreakdown.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                  </Descriptions.Item>
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 5: Amazon Print Calculations</Title>
+                  <PriceBreakdownItem label="Print on Amazon (Original) - Grand Total × 0.8" value={originalBreakdown.printOnAmazonOriginal || 0} />
+                  <PriceBreakdownItem label="Print on Amazon (Small)" value={originalBreakdown.printOnAmazonSmall || 0} />
+                  <PriceBreakdownItem label="Print on Amazon (Big)" value={originalBreakdown.printOnAmazonBig || 0} />
+                  
+                  <Descriptions.Item label={<Text strong>Main Total</Text>}>
+                    <Text strong style={{ color: '#13c2c2' }}>₹{(originalBreakdown.mainTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                  </Descriptions.Item>
+                  
+                  <Descriptions.Item label={<Title level={4}>*5 Gallery Price (Main Total ÷ 2)</Title>}>
+                    <Title level={4} style={{ color: '#A36FFF', fontSize: '24px' }}>₹{(originalBreakdown.galleryPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            ) : pricing.isOriginalAvailable ? (
+              <Card style={{ marginBottom: 24 }}>
+                <Text type="secondary">Original artwork is available but pricing breakdown is not calculated. Please edit the artwork to recalculate pricing.</Text>
+              </Card>
+            ) : null}
+
+            {/* Print-on-Demand Pricing */}
+            {pricing.isPrintOnDemandAvailable && podBreakdown ? (
+              <Card size="small" type="inner" title="Print-on-Demand Price Breakdown" style={{ marginBottom: 24 }}>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label="Square Inches">
+                    <Text strong>{(podBreakdown.sqInches || 0).toLocaleString()} sq inches</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Base Cost Per Sq Inch">
+                    <Text>₹{(podBreakdown.baseCostPerSqFt || 500).toLocaleString()}</Text>
+                  </Descriptions.Item>
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Calculate Base Prices</Title>
+                  <PriceBreakdownItem 
+                    label="Print Small (sq × 0.7 × 500)" 
+                    value={podBreakdown.printSmall || 0}
+                    note={`${podBreakdown.sqInches || 0} × 0.7 × 500`}
+                  />
+                  <PriceBreakdownItem 
+                    label="Print Original (sq × 500)" 
+                    value={podBreakdown.printOriginal || 0}
+                    note={`${podBreakdown.sqInches || 0} × 500`}
+                  />
+                  <PriceBreakdownItem 
+                    label="Print Big (sq × 2 × 500)" 
+                    value={podBreakdown.printBig || 0}
+                    note={`${podBreakdown.sqInches || 0} × 2 × 500`}
+                  />
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
+                  <PriceBreakdownItem label="Print Profit Small (× 1.3)" value={podBreakdown.printProfitSmall || 0} />
+                  <PriceBreakdownItem label="Print Profit Original (× 1.3)" value={podBreakdown.printProfitOriginal || 0} />
+                  <PriceBreakdownItem label="Print Profit Big (× 1.3)" value={podBreakdown.printProfitBig || 0} />
+                  
+                  <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Final Prices with GST (12%)</Title>
+                  <Descriptions.Item label={<Title level={5}>Final Price Small (× 1.12)</Title>}>
+                    <Title level={5} style={{ color: '#A36FFF' }}>₹{(podBreakdown.finalPriceSmall || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Title level={4}>Final Price Original (× 1.12)</Title>}>
+                    <Title level={4} style={{ color: '#A36FFF', fontSize: '20px' }}>₹{(podBreakdown.finalPriceOriginal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Title level={5}>Final Price Big (× 1.12)</Title>}>
+                    <Title level={5} style={{ color: '#A36FFF' }}>₹{(podBreakdown.finalPriceBig || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            ) : pricing.isPrintOnDemandAvailable ? (
+              <Card style={{ marginBottom: 24 }}>
+                <Text type="secondary">Print-on-demand is available but pricing breakdown is not calculated. Please edit the artwork to recalculate pricing.</Text>
+              </Card>
+            ) : null}
+
+            {/* Show message if neither pricing option is available */}
+            {!pricing.isOriginalAvailable && !pricing.isPrintOnDemandAvailable && (
+              <Card style={{ marginBottom: 24 }}>
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <Text type="secondary">Neither original artwork nor print-on-demand is marked as available.</Text>
+                  <br />
+                  <Button 
+                    type="primary" 
+                    style={{ marginTop: 16 }}
+                    onClick={() => navigate(`/artworks/edit/${id}`)}
+                  >
+                    Edit Artwork to Enable Pricing Options
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+
         <Divider orientation="left"><ShopOutlined /> Marketplace Listings</Divider>
         <Descriptions bordered column={1} size="small">
           <Descriptions.Item label={<Space><AmazonOutlined /> Amazon</Space>}>
