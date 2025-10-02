@@ -15,7 +15,7 @@ const handleMongooseError = (res, error) => {
   return res.status(500).json({ message: error.message || 'An unexpected server error occurred.' });
 };
 
-// 📌 Get all artworks (with search, filter, pagination)
+// 東 Get all artworks (with search, filter, pagination)
 const getArtworks = async (req, res) => {
   try {
     const { search, artist, status, page = 1, limit = 10 } = req.query;
@@ -52,7 +52,7 @@ const getArtworks = async (req, res) => {
   }
 };
 
-// 📌 Get a single artwork by ID
+// 東 Get a single artwork by ID
 const getArtworkById = async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id)
@@ -67,7 +67,7 @@ const getArtworkById = async (req, res) => {
   }
 };
 
-// 📌 Create new artwork
+// 東 Create new artwork
 const createArtwork = async (req, res) => {
   try {
     const { body } = req;
@@ -116,6 +116,10 @@ const createArtwork = async (req, res) => {
     const pricing = new Pricing({
       artwork: createdArtwork._id,
       lastCalculatedBy: req.user._id,
+      // --- FIX START ---
+      isOriginalAvailable: pricingInput.isOriginalAvailable,
+      isPrintOnDemandAvailable: pricingInput.isPrintOnDemandAvailable,
+      // --- FIX END ---
       ...calculatedPrices,
       amazonListing: {
         ...calculatedPrices.amazonListing,
@@ -134,7 +138,7 @@ const createArtwork = async (req, res) => {
   }
 };
 
-// 📌 Update artwork
+// 東 Update artwork
 const updateArtwork = async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id);
@@ -194,6 +198,10 @@ const updateArtwork = async (req, res) => {
     Object.assign(pricing, {
       lastCalculatedBy: req.user._id,
       lastCalculationDate: new Date(),
+      // --- FIX START ---
+      isOriginalAvailable: pricingInput.isOriginalAvailable,
+      isPrintOnDemandAvailable: pricingInput.isPrintOnDemandAvailable,
+      // --- FIX END ---
       ...calculatedPrices,
       amazonListing: {
         ...calculatedPrices.amazonListing,
@@ -212,7 +220,7 @@ const updateArtwork = async (req, res) => {
   }
 };
 
-// 📌 Delete artwork
+// 東 Delete artwork
 const deleteArtwork = async (req, res) => {
   try {
     const artwork = await Artwork.findById(req.params.id);

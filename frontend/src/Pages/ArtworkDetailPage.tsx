@@ -13,6 +13,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
 import type { Artwork, Pricing, Artist } from '../types/artwork';
+import { useNotification } from '../Context/NotificationContext';
 
 const { Title, Text, Paragraph, Link } = Typography;
 
@@ -179,6 +180,7 @@ const ArtworkDetailPage: React.FC = () => {
                     <Text strong style={{ color: '#fa8c16' }}>₹{(originalBreakdown.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
                   </Descriptions.Item>
                   
+                  
                   <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 4: Gallery Markup (×5)</Title>
                   <Descriptions.Item label={<Text strong>Grand Total (Total × 5)</Text>}>
                     <Text strong style={{ color: '#722ed1' }}>₹{(originalBreakdown.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
@@ -241,6 +243,15 @@ const ArtworkDetailPage: React.FC = () => {
                   <Descriptions.Item label={<Title level={5}>Final Price Small (× 1.12)</Title>}>
                     <Title level={5} style={{ color: '#A36FFF' }}>₹{(podBreakdown.finalPriceSmall || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
                   </Descriptions.Item>
+                       <Title level={5} style={{ color: '#A36FFF' }}>₹{(podBreakdown.smallPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                
+                  <Descriptions.Item label={<Title level={4}>Final Price Original (× 1.12)</Title>}>
+                    <Title level={4} style={{ color: '#A36FFF', fontSize: '20px' }}>₹{(podBreakdown.originalSizePrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Title level={5}>Final Price Big (× 1.12)</Title>}>
+                    <Title level={5} style={{ color: '#A36FFF' }}>₹{(podBreakdown.largePrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+                    {/* --- FIX END --- */}
+                    </Descriptions.Item>
                   <Descriptions.Item label={<Title level={4}>Final Price Original (× 1.12)</Title>}>
                     <Title level={4} style={{ color: '#A36FFF', fontSize: '20px' }}>₹{(podBreakdown.finalPriceOriginal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
                   </Descriptions.Item>

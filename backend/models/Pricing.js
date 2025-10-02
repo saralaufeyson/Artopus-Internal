@@ -34,7 +34,7 @@ const PricingSchema = new mongoose.Schema({
     totalWithGST: { type: Number, default: 0 },
     galleryPrice: { type: Number, default: 0 },
     // Fields from frontend that were missing
-    artistCharge: { type: Number, default: 0 },
+   // artistCharge: { type: Number, default: 0 },
     gstAmount: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
     printOnAmazonOriginal: { type: Number, default: 0 },
@@ -56,7 +56,7 @@ const PricingSchema = new mongoose.Schema({
   printOnDemandPricing: {
     baseCostPerSqFt: { type: Number, default: 0 },
     printingCost: { type: Number, default: 0 },
-    artistCharge: { type: Number, default: 0 },
+    //artistCharge: { type: Number, default: 0 },
     rawTotal: { type: Number, default: 0 },
     profitMargin: { type: Number, default: 0 },
     profitAmount: { type: Number, default: 0 },

@@ -82,6 +82,8 @@ export interface OriginalPricing {
   totalWithGST: number;
   galleryPrice: number;
   soldDetails?: SoldDetails;
+  rtPlusProfit: number;
+  total: number;
 }
 
 export interface PrintOnDemandPricing {
