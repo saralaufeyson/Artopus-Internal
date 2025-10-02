@@ -117,6 +117,10 @@ const ArtworkDetailPage: React.FC = () => {
               <Descriptions.Item label="Medium">{artwork.medium}</Descriptions.Item>
               <Descriptions.Item label="Dimensions">
                 {`${artwork.dimensions.length} x ${artwork.dimensions.breadth} ${artwork.dimensions.unit}`}
+                <br />
+                <Text type="secondary">
+                  ({(artwork.dimensions.length * artwork.dimensions.breadth).toLocaleString()} square inches)
+                </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Status">
                 <Tag color="blue">{artwork.status?.toUpperCase()}</Tag>
@@ -125,6 +129,9 @@ const ArtworkDetailPage: React.FC = () => {
                 {artwork.tags.length > 0 ? artwork.tags.map(tag => <Tag key={tag}>{tag}</Tag>) : 'No tags'}
               </Descriptions.Item>
               <Descriptions.Item label="Days to Create">{artwork.noOfDays || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="Base Selling Price">
+                <Text strong style={{ color: '#A36FFF' }}>₹{artwork.sellingPrice?.toLocaleString('en-IN')}</Text>
+              </Descriptions.Item>
             </Descriptions>
           </Col>
         </Row>
@@ -134,58 +141,86 @@ const ArtworkDetailPage: React.FC = () => {
         {pricing?.isOriginalAvailable && originalBreakdown && (
           <Card size="small" type="inner" title="Original Artwork Price Breakdown" style={{ marginBottom: 24 }}>
             <Descriptions bordered column={1} size="small">
+              <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Base Costs</Title>
               <PriceBreakdownItem label="Art Material Cost" value={originalBreakdown.artMaterialCost} />
-              <PriceBreakdownItem 
-                label="Total Artist Charge" 
-                value={originalBreakdown.totalArtistCharge}
-                note={`(₹${originalBreakdown.artistChargePerDay?.toLocaleString()} per day for ${originalBreakdown.noOfDays} days)`}
-              />
-              <PriceBreakdownItem label="Packing & Delivery" value={originalBreakdown.packingAndDeliveryCharges} />
-              <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
-                <Text strong>₹{originalBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              <PriceBreakdownItem label="Artist Charge" value={originalBreakdown.artistCharge} />
+              <PriceBreakdownItem label="Packing & Delivery Charges" value={originalBreakdown.packingAndDeliveryCharges} />
+              <Descriptions.Item label={<Text strong>Raw Total</Text>}>
+                <Text strong style={{ color: '#1890ff' }}>₹{originalBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
               </Descriptions.Item>
-              <PriceBreakdownItem 
-                label={`Profit Margin (${(originalBreakdown.profitMargin || 0) * 100}%)`} 
-                value={originalBreakdown.profitAmount}
-              />
-               <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
-                <Text strong>₹{originalBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-               </Descriptions.Item>
-              <PriceBreakdownItem label="GST (12%)" value={originalBreakdown.gstOnProfit} />
-              <Descriptions.Item label={<Title level={5}>Total (Before Gallery Markup)</Title>}>
-                <Title level={5}>₹{originalBreakdown.totalWithGST?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+              
+              <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
+              <Descriptions.Item label={<Text strong>RT + Profit (Raw Total × 1.3)</Text>}>
+                <Text strong style={{ color: '#52c41a' }}>₹{originalBreakdown.rtPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
               </Descriptions.Item>
-                <Descriptions.Item label={<Title level={4}>Final Gallery Price</Title>}>
-                <Title level={4} style={{ color: '#A36FFF' }}>₹{originalBreakdown.galleryPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+              
+              <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Add GST (12%)</Title>
+              <Descriptions.Item label={<Text strong>Total (RT + Profit × 1.12)</Text>}>
+                <Text strong style={{ color: '#fa8c16' }}>₹{originalBreakdown.total?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              </Descriptions.Item>
+              
+              <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 4: Gallery Markup (×5)</Title>
+              <Descriptions.Item label={<Text strong>Grand Total (Total × 5)</Text>}>
+                <Text strong style={{ color: '#722ed1' }}>₹{originalBreakdown.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              </Descriptions.Item>
+              
+              <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 5: Amazon Print Calculations</Title>
+              <PriceBreakdownItem label="Print on Amazon (Original) - Grand Total × 0.8" value={originalBreakdown.printOnAmazonOriginal} />
+              <PriceBreakdownItem label="Print on Amazon (Small)" value={originalBreakdown.printOnAmazonSmall} />
+              <PriceBreakdownItem label="Print on Amazon (Big)" value={originalBreakdown.printOnAmazonBig} />
+              
+              <Descriptions.Item label={<Text strong>Main Total</Text>}>
+                <Text strong style={{ color: '#13c2c2' }}>₹{originalBreakdown.mainTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              </Descriptions.Item>
+              
+              <Descriptions.Item label={<Title level={4}>*5 Gallery Price (Main Total ÷ 2)</Title>}>
+                <Title level={4} style={{ color: '#A36FFF', fontSize: '24px' }}>₹{originalBreakdown.galleryPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
               </Descriptions.Item>
             </Descriptions>
           </Card>
         )}
 
         {pricing?.isPrintOnDemandAvailable && podBreakdown && (
-           <Card size="small" type="inner" title="Print-on-Demand Price Breakdown">
+           <Card size="small" type="inner" title="Print-on-Demand Price Breakdown" style={{ marginBottom: 24 }}>
              <Descriptions bordered column={1} size="small">
-               <PriceBreakdownItem label="Printing Cost" value={podBreakdown.printingCost} note={`Based on area at ₹${podBreakdown.baseCostPerSqFt}/sq.ft.`} />
-               <PriceBreakdownItem label="Artist Charge (Flat)" value={podBreakdown.artistCharge} />
-               <Descriptions.Item label={<Text strong>Subtotal (Costs)</Text>}>
-                <Text strong>₹{podBreakdown.rawTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+               <Descriptions.Item label="Square Inches">
+                 <Text strong>{podBreakdown.sqInches?.toLocaleString()} sq inches</Text>
                </Descriptions.Item>
-              <PriceBreakdownItem 
-                label={`Profit Margin (${(podBreakdown.profitMargin || 0) * 100}%)`} 
-                value={podBreakdown.profitAmount}
-              />
-               <Descriptions.Item label={<Text strong>Subtotal (Before GST)</Text>}>
-                <Text strong>₹{podBreakdown.rawTotalPlusProfit?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+               <Descriptions.Item label="Base Cost Per Sq Inch">
+                 <Text>₹{podBreakdown.baseCostPerSqFt?.toLocaleString()}</Text>
                </Descriptions.Item>
-               <PriceBreakdownItem label="GST (12%)" value={podBreakdown.gstOnProfit} />
-               <Descriptions.Item label={<Title level={5}>Final Price (Small Print)</Title>}>
-                <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.smallPrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+               
+               <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 1: Calculate Base Prices</Title>
+               <PriceBreakdownItem 
+                 label="Print Small (sq × 0.7 × 500)" 
+                 value={podBreakdown.printSmall}
+                 note={`${podBreakdown.sqInches} × 0.7 × 500`}
+               />
+               <PriceBreakdownItem 
+                 label="Print Original (sq × 500)" 
+                 value={podBreakdown.printOriginal}
+                 note={`${podBreakdown.sqInches} × 500`}
+               />
+               <PriceBreakdownItem 
+                 label="Print Big (sq × 2 × 500)" 
+                 value={podBreakdown.printBig}
+                 note={`${podBreakdown.sqInches} × 2 × 500`}
+               />
+               
+               <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 2: Add Profit (30%)</Title>
+               <PriceBreakdownItem label="Print Profit Small (× 1.3)" value={podBreakdown.printProfitSmall} />
+               <PriceBreakdownItem label="Print Profit Original (× 1.3)" value={podBreakdown.printProfitOriginal} />
+               <PriceBreakdownItem label="Print Profit Big (× 1.3)" value={podBreakdown.printProfitBig} />
+               
+               <Title level={5} style={{ margin: '16px 0 8px 0' }}>Step 3: Final Prices with GST (12%)</Title>
+               <Descriptions.Item label={<Title level={5}>Final Price Small (× 1.12)</Title>}>
+                 <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.finalPriceSmall?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
                </Descriptions.Item>
-               <Descriptions.Item label={<Title level={4}>Final Price (Original Size Print)</Title>}>
-                <Title level={4} style={{ color: '#A36FFF' }}>₹{podBreakdown.originalSizePrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+               <Descriptions.Item label={<Title level={4}>Final Price Original (× 1.12)</Title>}>
+                 <Title level={4} style={{ color: '#A36FFF', fontSize: '20px' }}>₹{podBreakdown.finalPriceOriginal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
                </Descriptions.Item>
-               <Descriptions.Item label={<Title level={5}>Final Price (Large Print)</Title>}>
-                <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.largePrice?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
+               <Descriptions.Item label={<Title level={5}>Final Price Big (× 1.12)</Title>}>
+                 <Title level={5} style={{ color: '#A36FFF' }}>₹{podBreakdown.finalPriceBig?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Title>
                </Descriptions.Item>
              </Descriptions>
            </Card>

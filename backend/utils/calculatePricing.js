@@ -4,48 +4,59 @@ const calculatePricing = (options) => {
     lengthInches,
     breadthInches,
     artMaterialCost,
-    artistChargePerDay,
+    artistCharge,
     noOfDays,
     packingAndDeliveryCharges,
-    basePrintCostPerSqFt, // correct field
+    baseCostPerSqFt, // correct field name
     isOriginalAvailable,
     isPrintOnDemandAvailable,
     soldDetails,
   } = options;
 
-  const profitMarginOriginal = 0.20;
-  const profitMarginPOD = 0.15;
+  const profitMarginOriginal = 0.30; // 30% as per your formula (1.3 multiplier)
+  const profitMarginPOD = 0.30; // 30% as per your formula (1.3 multiplier)
   const gstRate = 0.12;
-  const amazonMarkupRate = 0.25;
+  const galleryMultiplier = 5; // As per your formula
 
   const result = {};
 
   const sqInches = lengthInches * breadthInches;
-  const sqFeet = sqInches / 144;
 
   // ✅ Original artwork pricing
   if (isOriginalAvailable) {
-    const totalArtistCharge = artistChargePerDay * noOfDays;
+    const totalArtistCharge = artistCharge; // Use total artist charge directly
     const rawTotal =
       artMaterialCost + totalArtistCharge + packingAndDeliveryCharges;
-    const profitAmount = rawTotal * profitMarginOriginal;
-    const rawTotalPlusProfit = rawTotal + profitAmount;
-    const gstOnProfit = rawTotalPlusProfit * gstRate;
-    const totalWithGST = rawTotalPlusProfit + gstOnProfit;
-    const galleryPrice = totalWithGST * 5; // multiplier for gallery
+    const rtPlusProfit = rawTotal * 1.3; // RT + Profit = Raw Total × 1.3
+    const total = rtPlusProfit * 1.12; // Total = RT + Profit × 1.12
+    const grandTotal = total * galleryMultiplier; // Grand Total = Total × 5
+    const printOnAmazonOriginal = grandTotal * 0.8; // Print on Amazon (Original) = Grand Total × 0.8
+    
+    // Calculate print on Amazon small and big (using print-on-demand logic)
+    const printSmall = sqInches * 0.7 * 500;
+    const printBig = sqInches * 2 * 500;
+    const printSmallWithProfit = printSmall * 1.3;
+    const printBigWithProfit = printBig * 1.3;
+    const printOnAmazonSmall = printSmallWithProfit * 1.12;
+    const printOnAmazonBig = printBigWithProfit * 1.12;
+    
+    const mainTotal = grandTotal + printOnAmazonSmall + printOnAmazonBig;
+    const galleryPrice = mainTotal / 2; // *5 Gallery Price = Main Total ÷ 2
 
     result.originalPricing = {
       artMaterialCost,
-      artistChargePerDay,
+      artistCharge: totalArtistCharge,
       noOfDays,
       totalArtistCharge,
       packingAndDeliveryCharges,
       rawTotal,
-      profitMargin: profitMarginOriginal,
-      profitAmount,
-      rawTotalPlusProfit,
-      gstOnProfit,
-      totalWithGST,
+      rtPlusProfit,
+      total,
+      grandTotal,
+      printOnAmazonOriginal,
+      printOnAmazonSmall,
+      printOnAmazonBig,
+      mainTotal,
       galleryPrice,
       soldDetails,
     };
@@ -53,30 +64,36 @@ const calculatePricing = (options) => {
 
   // ✅ Print-on-Demand pricing
   if (isPrintOnDemandAvailable) {
-    const printingCost = sqFeet * basePrintCostPerSqFt;
-    const artistCharge = artistChargePerDay;
-    const rawTotal = printingCost + artistCharge;
-    const profitAmount = rawTotal * profitMarginPOD;
-    const rawTotalPlusProfit = rawTotal + profitAmount;
-    const gstOnProfit = rawTotalPlusProfit * gstRate;
-    const finalPrice = rawTotalPlusProfit + gstOnProfit;
+    // Step 1: Calculate base prices
+    const printSmall = sqInches * 0.7 * baseCostPerSqFt; // Print Small = sq × 0.7 × 500
+    const printOriginal = sqInches * baseCostPerSqFt; // Print Original = sq × 500
+    const printBig = sqInches * 2 * baseCostPerSqFt; // Print Big = sq × 2 × 500
+    
+    // Step 2: Add profit (30%)
+    const printProfitSmall = printSmall * 1.3; // Print Profit Small = Print Small × 1.3
+    const printProfitOriginal = printOriginal * 1.3; // Print Profit Original = Print Original × 1.3
+    const printProfitBig = printBig * 1.3; // Print Profit Big = Print Big × 1.3
+    
+    // Step 3: Add GST (12%) to get final prices
+    const finalPriceSmall = printProfitSmall * 1.12; // Final Price Small = Print Profit Small × 1.12
+    const finalPriceOriginal = printProfitOriginal * 1.12; // Final Price Original = Print Profit Original × 1.12
+    const finalPriceBig = printProfitBig * 1.12; // Final Price Big = Print Profit Big × 1.12
 
     result.printOnDemandPricing = {
-      basePrintCostPerSqFt, // fixed: now correctly included
-      printingCost,
-      artistCharge,
-      rawTotal,
-      profitMargin: profitMarginPOD,
-      profitAmount,
-      rawTotalPlusProfit,
-      gstOnProfit,
-      originalSizePrice: finalPrice,
-      smallPrice: finalPrice * 0.7,
-      largePrice: finalPrice * 1.3,
-    };
-
-    result.amazonListing = {
-      basePriceAmazon: finalPrice * (1 + amazonMarkupRate),
+      sqInches,
+      baseCostPerSqFt,
+      // Step 1: Base prices
+      printSmall,
+      printOriginal,
+      printBig,
+      // Step 2: With profit
+      printProfitSmall,
+      printProfitOriginal,
+      printProfitBig,
+      // Step 3: Final prices with GST
+      finalPriceSmall,
+      finalPriceOriginal,
+      finalPriceBig,
     };
   }
 

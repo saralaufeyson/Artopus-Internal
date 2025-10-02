@@ -488,8 +488,9 @@ const ArtworkFormPage: React.FC = () => {
               return (
                 <Form.Item
                   name="basePrintCostPerSqFt"
-                  label="Base Print Cost Per Sq. Inch (₹) - Default: 500"
+                  label="Base Print Cost Per Sq. Inch (₹)"
                   rules={[{ required: true, message: 'Please input base print cost!' }]}
+                  initialValue={500}
                 >
                   <InputNumber min={0} style={{ width: '100%' }} formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
                 </Form.Item>
