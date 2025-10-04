@@ -7,7 +7,7 @@ import {
 import {
   PictureOutlined, ArrowLeftOutlined, EditOutlined,
   MoneyCollectOutlined, ShopOutlined, BookOutlined, FormOutlined,
-  GlobalOutlined, AmazonOutlined, InfoCircleOutlined
+  GlobalOutlined, AmazonOutlined, InfoCircleOutlined, ShoppingOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -173,6 +173,40 @@ const ArtworkDetailPage: React.FC = () => {
             </>
           )}
         </div>
+
+        {/* --- Sold Information --- */}
+        {pricing?.isOriginalAvailable && pricing?.originalPricing?.soldDetails?.isSold && (
+          <>
+            <Divider orientation="left"><ShoppingOutlined /> Sold Information</Divider>
+            <Card size="small" type="inner" style={{ marginBottom: 24, background: '#f6ffed', borderColor: '#b7eb8f' }}>
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Sale Status">
+                  <Tag color="success">SOLD</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Selling Price">
+                  <Text strong style={{ color: '#52c41a', fontSize: '16px' }}>
+                    ₹{pricing.originalPricing.soldDetails.sellingPrice?.toLocaleString('en-IN') || 'N/A'}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Sale Date">
+                  {pricing.originalPricing.soldDetails.saleDate
+                    ? new Date(pricing.originalPricing.soldDetails.saleDate).toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })
+                    : 'N/A'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Buyer Name">
+                  {pricing.originalPricing.soldDetails.buyerName || 'N/A'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Buyer Contact">
+                  {pricing.originalPricing.soldDetails.buyerContact || 'N/A'}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </>
+        )}
 
         <Divider orientation="left"><ShopOutlined /> Marketplace Listings</Divider>
         <Descriptions bordered column={1} size="small">
