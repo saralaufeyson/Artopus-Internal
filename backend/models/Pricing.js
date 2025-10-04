@@ -22,9 +22,8 @@ const PricingSchema = new mongoose.Schema({
   },
   originalPricing: {
     artMaterialCost: { type: Number, default: 0 },
-    artistChargePerDay: { type: Number, default: 0 },
+    artistCharge: { type: Number, default: 0 }, // Corrected field
     noOfDays: { type: Number, default: 0 },
-    totalArtistCharge: { type: Number, default: 0 },
     packingAndDeliveryCharges: { type: Number, default: 0 },
     rawTotal: { type: Number, default: 0 },
     profitMargin: { type: Number, default: 0 },
@@ -33,9 +32,6 @@ const PricingSchema = new mongoose.Schema({
     gstOnProfit: { type: Number, default: 0 },
     totalWithGST: { type: Number, default: 0 },
     galleryPrice: { type: Number, default: 0 },
-    // Fields from frontend that were missing
-   // artistCharge: { type: Number, default: 0 },
-    gstAmount: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
     printOnAmazonOriginal: { type: Number, default: 0 },
     printOnAmazonSmall: { type: Number, default: 0 },
@@ -56,7 +52,6 @@ const PricingSchema = new mongoose.Schema({
   printOnDemandPricing: {
     baseCostPerSqFt: { type: Number, default: 0 },
     printingCost: { type: Number, default: 0 },
-    //artistCharge: { type: Number, default: 0 },
     rawTotal: { type: Number, default: 0 },
     profitMargin: { type: Number, default: 0 },
     profitAmount: { type: Number, default: 0 },
@@ -65,7 +60,6 @@ const PricingSchema = new mongoose.Schema({
     smallPrice: { type: Number, default: 0 },
     originalSizePrice: { type: Number, default: 0 },
     largePrice: { type: Number, default: 0 },
-    // Fields from frontend that were missing
     sqInches: { type: Number, default: 0 },
     printSmall: { type: Number, default: 0 },
     printOriginal: { type: Number, default: 0 },

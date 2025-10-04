@@ -49,7 +49,7 @@ const ArtworkFormPage: React.FC = () => {
     if (token) {
       fetchArtists();
     }
-  }, [token]);
+  }, [token, showNotification]);
 
   // --- Fetch Artwork Data for Editing ---
   useEffect(() => {
@@ -88,7 +88,7 @@ const ArtworkFormPage: React.FC = () => {
           // Pricing details
           isOriginalAvailable: pricing?.isOriginalAvailable,
           artMaterialCost: pricing?.originalPricing?.artMaterialCost,
-          artistCharge: pricing?.originalPricing?.artistCharge, // Total artist charge
+          artistCharge: pricing?.originalPricing?.artistCharge, // ***CORRECTED FIELD***
           packingAndDeliveryCharges: pricing?.originalPricing?.packingAndDeliveryCharges,
           isPrintOnDemandAvailable: pricing?.isPrintOnDemandAvailable,
           basePrintCostPerSqFt: pricing?.printOnDemandPricing?.baseCostPerSqFt,
@@ -113,7 +113,7 @@ const ArtworkFormPage: React.FC = () => {
       }
     };
     fetchArtwork();
-  }, [id, isEditing, token, form, navigate]);
+  }, [id, isEditing, token, form, navigate, showNotification]);
 
   // --- Form Submission Handler ---
   const onFinish = async (values: any) => {
@@ -145,7 +145,7 @@ const ArtworkFormPage: React.FC = () => {
 
         isOriginalAvailable: values.isOriginalAvailable,
         artMaterialCost: values.artMaterialCost,
-        artistCharge: values.artistCharge, // Total artist charge
+        artistCharge: values.artistCharge, // ***CORRECTED FIELD***
         packingAndDeliveryCharges: values.packingAndDeliveryCharges,
         isPrintOnDemandAvailable: values.isPrintOnDemandAvailable,
         basePrintCostPerSqFt: values.basePrintCostPerSqFt,

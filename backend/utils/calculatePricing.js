@@ -24,16 +24,23 @@ const calculatePricing = (options) => {
   if (isOriginalAvailable) {
     const rawTotal = artMaterialCost + artistCharge + packingAndDeliveryCharges;
     const profitAmount = rawTotal * profitMargin;
-    const rawTotalPlusProfit = rawTotal + profitAmount; // Corrected this line for clarity
+    const rawTotalPlusProfit = rawTotal + profitAmount;
     const gstAmount = rawTotalPlusProfit * gstRate;
     const totalWithGST = rawTotalPlusProfit + gstAmount;
     const grandTotal = totalWithGST * galleryMultiplier;
 
-    // These calculations depend on the PoD logic, so we do them here
-    const printSmallBase = sqInches * 0.7 * (baseCostPerSqFt || 500);
-    const printBigBase = sqInches * 2 * (baseCostPerSqFt || 500);
-    const printOnAmazonSmall = (printSmallBase * (1 + profitMargin)) * (1 + gstRate);
-    const printOnAmazonBig = (printBigBase * (1 + profitMargin)) * (1 + gstRate);
+    // Initialize print values to 0
+    let printOnAmazonSmall = 0;
+    let printOnAmazonBig = 0;
+
+    // Only calculate print-related costs if the option is available
+    if (isPrintOnDemandAvailable) {
+      const printSmallBase = sqInches * 0.7 * (baseCostPerSqFt || 500);
+      const printBigBase = sqInches * 2 * (baseCostPerSqFt || 500);
+      printOnAmazonSmall = (printSmallBase * (1 + profitMargin)) * (1 + gstRate);
+      printOnAmazonBig = (printBigBase * (1 + profitMargin)) * (1 + gstRate);
+    }
+
     const printOnAmazonOriginal = grandTotal * 0.8;
 
     const mainTotal = grandTotal + printOnAmazonSmall + printOnAmazonBig;
@@ -94,3 +101,4 @@ const calculatePricing = (options) => {
 };
 
 module.exports = calculatePricing;
+
