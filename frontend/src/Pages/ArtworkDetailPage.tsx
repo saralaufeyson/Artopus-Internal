@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Typography, Breadcrumb, Spin, Row, Col, Card, Tag,
-  Descriptions, Image, Divider, List, Button, Space, Tooltip
+  Descriptions, Image, Divider, List, Button, Space
 } from 'antd';
 import {
   PictureOutlined, ArrowLeftOutlined, EditOutlined,
   MoneyCollectOutlined, ShopOutlined, BookOutlined, FormOutlined,
-  GlobalOutlined, AmazonOutlined, InfoCircleOutlined, ShoppingOutlined
+  GlobalOutlined, AmazonOutlined, ShoppingOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';

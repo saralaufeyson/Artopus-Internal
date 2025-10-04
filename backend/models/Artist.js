@@ -42,6 +42,16 @@ const ArtistSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
+  profileImageUrl: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active',
+  },
   internalNotes: {
     type: String,
     trim: true,
