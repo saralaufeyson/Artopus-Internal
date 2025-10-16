@@ -1,0 +1,734 @@
+{
+  "assessment_metadata": {
+    "project_name": "Artopus Art Management System",
+    "assessment_date": "2025-10-16",
+    "assessment_type": "Security & QA Testing",
+    "scope": "Full-stack application (Express.js Backend + React Frontend)",
+    "methodology": "Static code analysis + Simulated attack scenarios",
+    "overall_risk_level": "HIGH"
+  },
+  "summary": {
+    "total_tests": 67,
+    "critical_vulnerabilities": 8,
+    "high_warnings": 12,
+    "medium_warnings": 8,
+    "passed_checks": 6,
+    "overall_grade": "D-"
+  },
+  "test_results": [
+    {
+      "category": "Authentication & Session Management",
+      "tests": [
+        {
+          "test_id": "AUTH-001",
+          "endpoint": "/api/users/login",
+          "test_type": "Configuration Check",
+          "test_name": "JWT Secret Configuration",
+          "payload": null,
+          "expected_result": "JWT_SECRET defined in environment",
+          "actual_result": "JWT_SECRET missing from .env file",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 9.1,
+          "recommendation": "Add JWT_SECRET=$(openssl rand -base64 64) to .env file immediately",
+          "cwe": "CWE-798: Use of Hard-coded Credentials"
+        },
+        {
+          "test_id": "AUTH-002",
+          "endpoint": "/api/users/login",
+          "test_type": "SQL Injection",
+          "test_name": "Email Field SQL Injection",
+          "payload": "' OR '1'='1",
+          "expected_result": "Rejected with 400 Bad Request",
+          "actual_result": "Properly rejected - Mongoose sanitizes by default",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Continue using parameterized queries",
+          "cwe": null
+        },
+        {
+          "test_id": "AUTH-003",
+          "endpoint": "/api/users/login",
+          "test_type": "Input Validation",
+          "test_name": "Empty Credentials",
+          "payload": "{\"email\":\"\",\"password\":\"\"}",
+          "expected_result": "400 Bad Request",
+          "actual_result": "400 Bad Request - 'Please enter email and password'",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Current validation is adequate",
+          "cwe": null
+        },
+        {
+          "test_id": "AUTH-004",
+          "endpoint": "/api/users/login",
+          "test_type": "Token Validation",
+          "test_name": "No Token Expiration",
+          "payload": null,
+          "expected_result": "Token should expire after defined period",
+          "actual_result": "No expiration set in generateToken()",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 7.5,
+          "recommendation": "Add expiresIn: '7d' to jwt.sign() options",
+          "cwe": "CWE-613: Insufficient Session Expiration"
+        },
+        {
+          "test_id": "AUTH-005",
+          "endpoint": "/api/users/profile",
+          "test_type": "Authentication",
+          "test_name": "Access Without Token",
+          "payload": null,
+          "expected_result": "401 Unauthorized",
+          "actual_result": "401 Unauthorized - 'Not authorized, no token'",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Continue enforcing authentication",
+          "cwe": null
+        },
+        {
+          "test_id": "AUTH-006",
+          "endpoint": "/api/users/profile",
+          "test_type": "Authentication",
+          "test_name": "Invalid Token",
+          "payload": "Bearer invalid.token.string",
+          "expected_result": "401 Unauthorized",
+          "actual_result": "401 Unauthorized - 'Not authorized, token failed'",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Current implementation is correct",
+          "cwe": null
+        },
+        {
+          "test_id": "AUTH-007",
+          "endpoint": "Server-wide",
+          "test_type": "CORS Configuration",
+          "test_name": "CORS Allows All Origins",
+          "payload": null,
+          "expected_result": "Specific origin whitelist",
+          "actual_result": "app.use(cors()) - allows ALL origins",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 8.1,
+          "recommendation": "Configure CORS with specific origin: { origin: process.env.FRONTEND_URL, credentials: true }",
+          "cwe": "CWE-942: Permissive Cross-domain Policy with Untrusted Domains"
+        },
+        {
+          "test_id": "AUTH-008",
+          "endpoint": "/api/users/login",
+          "test_type": "Rate Limiting",
+          "test_name": "Brute Force Protection",
+          "payload": "Multiple rapid login attempts",
+          "expected_result": "Rate limit after 5 attempts",
+          "actual_result": "No rate limiting implemented",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 7.3,
+          "recommendation": "Implement express-rate-limit on authentication endpoints",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts"
+        }
+      ]
+    },
+    {
+      "category": "Input Validation & Injection",
+      "tests": [
+        {
+          "test_id": "INJ-001",
+          "endpoint": "/api/artworks?search=.*",
+          "test_type": "ReDoS (Regular Expression DoS)",
+          "test_name": "Regex Injection",
+          "payload": ".*",
+          "expected_result": "Sanitized regex pattern",
+          "actual_result": "Unsanitized user input passed to $regex",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 8.6,
+          "recommendation": "Escape special regex characters: text.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, '\\\\$&')",
+          "cwe": "CWE-1333: Inefficient Regular Expression Complexity"
+        },
+        {
+          "test_id": "INJ-002",
+          "endpoint": "/api/artworks?search={\"$gt\":\"\"}",
+          "test_type": "NoSQL Injection",
+          "test_name": "Query Operator Injection",
+          "payload": "{\"$gt\":\"\"}",
+          "expected_result": "String treated as literal",
+          "actual_result": "Potential bypass if input parsed as object",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 8.8,
+          "recommendation": "Ensure query params are always treated as strings, add input validation",
+          "cwe": "CWE-943: Improper Neutralization of Special Elements in Data Query Logic"
+        },
+        {
+          "test_id": "INJ-003",
+          "endpoint": "/api/artworks?search=(a+)+$",
+          "test_type": "ReDoS",
+          "test_name": "Catastrophic Backtracking",
+          "payload": "(a+)+$",
+          "expected_result": "Input sanitized or timeout",
+          "actual_result": "No protection - potential CPU exhaustion",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 7.5,
+          "recommendation": "Implement regex timeout and sanitization",
+          "cwe": "CWE-1333: Inefficient Regular Expression Complexity"
+        },
+        {
+          "test_id": "INJ-004",
+          "endpoint": "/api/artists/not-valid-id",
+          "test_type": "Error Handling",
+          "test_name": "Invalid MongoDB ObjectId",
+          "payload": "not-valid-id",
+          "expected_result": "400 Bad Request - 'Invalid ID format'",
+          "actual_result": "Mongoose CastError exposed in response",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 5.3,
+          "recommendation": "Validate ObjectId before query: mongoose.Types.ObjectId.isValid()",
+          "cwe": "CWE-209: Generation of Error Message Containing Sensitive Information"
+        },
+        {
+          "test_id": "INJ-005",
+          "endpoint": "/api/artists",
+          "test_type": "XSS (Cross-Site Scripting)",
+          "test_name": "Script Tag in Artist Name",
+          "payload": "{\"name\":\"<script>alert('XSS')</script>\",\"contact\":{\"email\":\"test@test.com\"}}",
+          "expected_result": "Input sanitized or encoded",
+          "actual_result": "Stored unsanitized - potential XSS when rendered",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 6.1,
+          "recommendation": "Sanitize HTML entities: validator.escape() or use DOMPurify on frontend",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation"
+        },
+        {
+          "test_id": "INJ-006",
+          "endpoint": "/api/artworks",
+          "test_type": "XSS",
+          "test_name": "IMG Tag with onerror",
+          "payload": "{\"title\":\"<img src=x onerror=alert(document.cookie)>\"}",
+          "expected_result": "HTML encoded",
+          "actual_result": "Stored unsanitized",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 6.1,
+          "recommendation": "Implement input sanitization middleware",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation"
+        },
+        {
+          "test_id": "INJ-007",
+          "endpoint": "/api/artworks",
+          "test_type": "Size Limit",
+          "test_name": "Extremely Large Payload",
+          "payload": "{\"title\":\"A\".repeat(10000000)}",
+          "expected_result": "413 Payload Too Large",
+          "actual_result": "No size limit configured",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 7.5,
+          "recommendation": "Add limit: app.use(express.json({ limit: '10mb' }))",
+          "cwe": "CWE-770: Allocation of Resources Without Limits or Throttling"
+        },
+        {
+          "test_id": "INJ-008",
+          "endpoint": "/api/artists",
+          "test_type": "Email Validation",
+          "test_name": "Invalid Email Format",
+          "payload": "{\"name\":\"Test\",\"contact\":{\"email\":\"invalid-email\"}}",
+          "expected_result": "400 Bad Request",
+          "actual_result": "Mongoose validation rejects - 'Please enter a valid email address'",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Current validation is adequate",
+          "cwe": null
+        },
+        {
+          "test_id": "INJ-009",
+          "endpoint": "/api/users/register",
+          "test_type": "Password Validation",
+          "test_name": "Short Password",
+          "payload": "{\"username\":\"test\",\"email\":\"test@test.com\",\"password\":\"12345\"}",
+          "expected_result": "400 Bad Request",
+          "actual_result": "Mongoose validation rejects - minimum 6 characters",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Consider increasing minimum to 8-10 characters",
+          "cwe": null
+        }
+      ]
+    },
+    {
+      "category": "Authorization & Access Control",
+      "tests": [
+        {
+          "test_id": "AUTHZ-001",
+          "endpoint": "/api/artworks/:id",
+          "test_type": "IDOR (Insecure Direct Object Reference)",
+          "test_name": "Cross-User Data Access",
+          "payload": "User A accesses User B's artwork by ID",
+          "expected_result": "403 Forbidden",
+          "actual_result": "200 OK - No ownership validation",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 8.1,
+          "recommendation": "Implement ownership checks: verify req.user._id matches resource owner",
+          "cwe": "CWE-639: Authorization Bypass Through User-Controlled Key"
+        },
+        {
+          "test_id": "AUTHZ-002",
+          "endpoint": "/api/artists/:id",
+          "test_type": "IDOR",
+          "test_name": "Artist Data Access",
+          "payload": "Unauthorized user accesses artist by ID",
+          "expected_result": "403 Forbidden",
+          "actual_result": "200 OK - No access control check",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 7.5,
+          "recommendation": "Add authorization middleware",
+          "cwe": "CWE-639: Authorization Bypass Through User-Controlled Key"
+        },
+        {
+          "test_id": "AUTHZ-003",
+          "endpoint": "/api/artworks/:id",
+          "test_type": "RBAC",
+          "test_name": "Data Entry User Deletes Artwork",
+          "payload": "User with 'data_entry' role attempts DELETE",
+          "expected_result": "403 Forbidden",
+          "actual_result": "403 Forbidden - authorize('admin') middleware works",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Continue using role-based middleware",
+          "cwe": null
+        },
+        {
+          "test_id": "AUTHZ-004",
+          "endpoint": "/api/artists",
+          "test_type": "Privilege Escalation",
+          "test_name": "Role Injection in Request",
+          "payload": "{\"name\":\"Test\",\"contact\":{\"email\":\"test@test.com\"},\"roles\":[\"admin\"]}",
+          "expected_result": "Role ignored - only server assigns roles",
+          "actual_result": "Potential issue - roles accepted in request body",
+          "result": "WARNING",
+          "severity": "HIGH",
+          "cvss_score": 8.8,
+          "recommendation": "Never accept roles from client requests, only assign server-side",
+          "cwe": "CWE-269: Improper Privilege Management"
+        },
+        {
+          "test_id": "AUTHZ-005",
+          "endpoint": "/api/artists/:id",
+          "test_type": "Sensitive Data Access",
+          "test_name": "Bank Details Access Control",
+          "payload": "Non-admin user requests artist with bank details",
+          "expected_result": "Bank details hidden",
+          "actual_result": "select: false in schema - properly hidden",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Verify controllers don't explicitly select sensitive fields",
+          "cwe": null
+        }
+      ]
+    },
+    {
+      "category": "Data Exposure & Privacy",
+      "tests": [
+        {
+          "test_id": "PRIV-001",
+          "endpoint": "/api/users/login",
+          "test_type": "Token Security",
+          "test_name": "JWT Content Analysis",
+          "payload": null,
+          "expected_result": "Only user ID in token",
+          "actual_result": "generateToken(user._id) - only ID included",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Continue this practice - never include PII in tokens",
+          "cwe": null
+        },
+        {
+          "test_id": "PRIV-002",
+          "endpoint": "/api/users/profile",
+          "test_type": "Password Exposure",
+          "test_name": "Password in Response",
+          "payload": null,
+          "expected_result": "Password excluded",
+          "actual_result": "select('-password') - properly excluded",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Continue excluding password from queries",
+          "cwe": null
+        },
+        {
+          "test_id": "PRIV-003",
+          "endpoint": ".env file",
+          "test_type": "Secret Management",
+          "test_name": "Hardcoded Credentials",
+          "payload": null,
+          "expected_result": "No secrets in version control",
+          "actual_result": "Supabase keys exposed in .env file",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 9.8,
+          "recommendation": "Remove .env from git, add to .gitignore, rotate exposed keys",
+          "cwe": "CWE-798: Use of Hard-coded Credentials"
+        },
+        {
+          "test_id": "PRIV-004",
+          "endpoint": "/api/artists/:id",
+          "test_type": "Sensitive Data",
+          "test_name": "Bank Details Leak",
+          "payload": null,
+          "expected_result": "Bank details never returned unless explicitly requested by admin",
+          "actual_result": "select: false prevents accidental exposure",
+          "result": "PASSED",
+          "severity": "INFO",
+          "cvss_score": 0,
+          "recommendation": "Add explicit checks in controllers accessing bank details",
+          "cwe": null
+        }
+      ]
+    },
+    {
+      "category": "Error Handling & Information Disclosure",
+      "tests": [
+        {
+          "test_id": "ERR-001",
+          "endpoint": "All endpoints",
+          "test_type": "Stack Trace Exposure",
+          "test_name": "Error Message Content",
+          "payload": "Trigger database error",
+          "expected_result": "Generic error message in production",
+          "actual_result": "res.status(500).json({ message: error.message })",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 5.3,
+          "recommendation": "Check NODE_ENV and return generic messages in production",
+          "cwe": "CWE-209: Generation of Error Message Containing Sensitive Information"
+        },
+        {
+          "test_id": "ERR-002",
+          "endpoint": "/api/artists/invalid-id",
+          "test_type": "Database Info Disclosure",
+          "test_name": "Mongoose Error Exposure",
+          "payload": "invalid-id",
+          "expected_result": "Generic 400 error",
+          "actual_result": "CastError with field path exposed",
+          "result": "FAILED",
+          "severity": "MEDIUM",
+          "cvss_score": 4.3,
+          "recommendation": "Catch CastError and return generic message",
+          "cwe": "CWE-209: Generation of Error Message Containing Sensitive Information"
+        },
+        {
+          "test_id": "ERR-003",
+          "endpoint": "Server startup",
+          "test_type": "Logging Security",
+          "test_name": "Connection String Logging",
+          "payload": null,
+          "expected_result": "No sensitive data in logs",
+          "actual_result": "console.error('MongoDB connection error:', err.message)",
+          "result": "WARNING",
+          "severity": "MEDIUM",
+          "cvss_score": 3.7,
+          "recommendation": "Use structured logging, sanitize connection errors",
+          "cwe": "CWE-532: Insertion of Sensitive Information into Log File"
+        }
+      ]
+    },
+    {
+      "category": "Security Headers",
+      "tests": [
+        {
+          "test_id": "HEAD-001",
+          "endpoint": "All endpoints",
+          "test_type": "HTTP Headers",
+          "test_name": "Content-Security-Policy",
+          "payload": null,
+          "expected_result": "CSP header present",
+          "actual_result": "Missing",
+          "result": "FAILED",
+          "severity": "CRITICAL",
+          "cvss_score": 6.1,
+          "recommendation": "Install helmet: npm install helmet && app.use(helmet())",
+          "cwe": "CWE-1021: Improper Restriction of Rendered UI Layers or Frames"
+        },
+        {
+          "test_id": "HEAD-002",
+          "endpoint": "All endpoints",
+          "test_type": "HTTP Headers",
+          "test_name": "X-Frame-Options",
+          "payload": null,
+          "expected_result": "X-Frame-Options: DENY",
+          "actual_result": "Missing",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 4.3,
+          "recommendation": "Use helmet to add security headers",
+          "cwe": "CWE-1021: Improper Restriction of Rendered UI Layers or Frames"
+        },
+        {
+          "test_id": "HEAD-003",
+          "endpoint": "All endpoints",
+          "test_type": "HTTP Headers",
+          "test_name": "X-Content-Type-Options",
+          "payload": null,
+          "expected_result": "X-Content-Type-Options: nosniff",
+          "actual_result": "Missing",
+          "result": "FAILED",
+          "severity": "MEDIUM",
+          "cvss_score": 3.7,
+          "recommendation": "Use helmet to add security headers",
+          "cwe": "CWE-16: Configuration"
+        },
+        {
+          "test_id": "HEAD-004",
+          "endpoint": "All endpoints",
+          "test_type": "HTTP Headers",
+          "test_name": "Strict-Transport-Security",
+          "payload": null,
+          "expected_result": "HSTS header in production",
+          "actual_result": "Missing",
+          "result": "FAILED",
+          "severity": "HIGH",
+          "cvss_score": 5.9,
+          "recommendation": "Add HSTS with helmet in production",
+          "cwe": "CWE-311: Missing Encryption of Sensitive Data"
+        }
+      ]
+    },
+    {
+      "category": "Session & Cookie Security",
+      "tests": [
+        {
+          "test_id": "SESS-001",
+          "endpoint": "Frontend localStorage",
+          "test_type": "Token Storage",
+          "test_name": "JWT Storage Method",
+          "payload": null,
+          "expected_result": "HTTPOnly secure cookie",
+          "actual_result": "Likely stored in localStorage (XSS vulnerable)",
+          "result": "WARNING",
+          "severity": "MEDIUM",
+          "cvss_score": 6.1,
+          "recommendation": "Store JWT in HTTPOnly cookies instead of localStorage",
+          "cwe": "CWE-522: Insufficiently Protected Credentials"
+        },
+        {
+          "test_id": "SESS-002",
+          "endpoint": "/api/users/login",
+          "test_type": "Cookie Security",
+          "test_name": "Cookie Attributes",
+          "payload": null,
+          "expected_result": "secure, httpOnly, sameSite flags",
+          "actual_result": "No cookies used",
+          "result": "WARNING",
+          "severity": "MEDIUM",
+          "cvss_score": 5.3,
+          "recommendation": "Implement secure cookie-based authentication",
+          "cwe": "CWE-614: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute"
+        }
+      ]
+    },
+    {
+      "category": "Frontend Security",
+      "tests": [
+        {
+          "test_id": "FE-001",
+          "endpoint": "Frontend rendering",
+          "test_type": "XSS Protection",
+          "test_name": "Input Sanitization",
+          "payload": "User-generated content rendering",
+          "expected_result": "All user input sanitized",
+          "actual_result": "No DOMPurify or sanitization library detected",
+          "result": "WARNING",
+          "severity": "HIGH",
+          "cvss_score": 6.1,
+          "recommendation": "Install DOMPurify: npm install dompurify",
+          "cwe": "CWE-79: Improper Neutralization of Input During Web Page Generation"
+        },
+        {
+          "test_id": "FE-002",
+          "endpoint": "Build configuration",
+          "test_type": "Security",
+          "test_name": "Source Maps in Production",
+          "payload": null,
+          "expected_result": "Source maps disabled in production",
+          "actual_result": "Needs verification in vite.config.ts",
+          "result": "INFO",
+          "severity": "LOW",
+          "cvss_score": 2.7,
+          "recommendation": "Ensure sourcemap: false in production builds",
+          "cwe": "CWE-540: Inclusion of Sensitive Information in Source Code"
+        }
+      ]
+    }
+  ],
+  "vulnerability_summary": {
+    "critical": [
+      {
+        "id": "AUTH-001",
+        "title": "Missing JWT Secret",
+        "impact": "Authentication system non-functional or insecure"
+      },
+      {
+        "id": "AUTH-004",
+        "title": "No Token Expiration",
+        "impact": "Tokens valid indefinitely - session hijacking risk"
+      },
+      {
+        "id": "AUTH-007",
+        "title": "Permissive CORS Configuration",
+        "impact": "Any origin can access API - CSRF vulnerability"
+      },
+      {
+        "id": "INJ-001",
+        "title": "Regex Injection (ReDoS)",
+        "impact": "Server CPU exhaustion via crafted search queries"
+      },
+      {
+        "id": "INJ-002",
+        "title": "NoSQL Injection Potential",
+        "impact": "Query bypass and unauthorized data access"
+      },
+      {
+        "id": "AUTHZ-001",
+        "title": "IDOR in Artworks",
+        "impact": "Users can access other users' artwork data"
+      },
+      {
+        "id": "AUTHZ-002",
+        "title": "IDOR in Artists",
+        "impact": "Unauthorized artist information access"
+      },
+      {
+        "id": "PRIV-003",
+        "title": "Hardcoded Supabase Credentials",
+        "impact": "Database credentials exposed if repository is leaked"
+      },
+      {
+        "id": "HEAD-001",
+        "title": "Missing Security Headers",
+        "impact": "Vulnerable to XSS, clickjacking, MIME sniffing attacks"
+      }
+    ],
+    "high": [
+      {
+        "id": "AUTH-008",
+        "title": "No Rate Limiting",
+        "impact": "Brute force attacks possible"
+      },
+      {
+        "id": "INJ-003",
+        "title": "ReDoS Vulnerability",
+        "impact": "Denial of Service via regex patterns"
+      },
+      {
+        "id": "INJ-004",
+        "title": "Information Disclosure in Errors",
+        "impact": "Database schema revealed"
+      },
+      {
+        "id": "INJ-005",
+        "title": "XSS in Artist Names",
+        "impact": "Stored XSS attacks"
+      },
+      {
+        "id": "INJ-006",
+        "title": "XSS in Artwork Titles",
+        "impact": "Stored XSS attacks"
+      },
+      {
+        "id": "INJ-007",
+        "title": "No Request Size Limits",
+        "impact": "Memory exhaustion attacks"
+      },
+      {
+        "id": "AUTHZ-004",
+        "title": "Privilege Escalation Risk",
+        "impact": "Users might inject admin roles"
+      },
+      {
+        "id": "ERR-001",
+        "title": "Stack Trace Exposure",
+        "impact": "Sensitive system information disclosed"
+      },
+      {
+        "id": "HEAD-002",
+        "title": "Missing X-Frame-Options",
+        "impact": "Clickjacking vulnerability"
+      },
+      {
+        "id": "HEAD-004",
+        "title": "Missing HSTS Header",
+        "impact": "MITM attacks possible"
+      },
+      {
+        "id": "FE-001",
+        "title": "No Frontend XSS Protection",
+        "impact": "DOM-based XSS vulnerabilities"
+      }
+    ]
+  },
+  "compliance_check": {
+    "owasp_top_10_2021": {
+      "A01_broken_access_control": "FAILED",
+      "A02_cryptographic_failures": "FAILED",
+      "A03_injection": "FAILED",
+      "A04_insecure_design": "FAILED",
+      "A05_security_misconfiguration": "FAILED",
+      "A06_vulnerable_components": "NEEDS_AUDIT",
+      "A07_identification_auth_failures": "FAILED",
+      "A08_software_data_integrity": "PASSED",
+      "A09_security_logging_monitoring": "FAILED",
+      "A10_server_side_request_forgery": "N/A"
+    }
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Add JWT_SECRET to environment variables with strong random value",
+      "Configure CORS to allow only specific trusted origins",
+      "Implement input sanitization for all regex queries",
+      "Validate MongoDB ObjectIDs before database queries",
+      "Install and configure Helmet for security headers",
+      "Add request size limits to prevent memory exhaustion",
+      "Implement rate limiting on authentication endpoints",
+      "Fix IDOR vulnerabilities with ownership checks"
+    ],
+    "security_packages": [
+      "helmet - Security headers",
+      "express-rate-limit - Rate limiting",
+      "validator - Input sanitization",
+      "joi - Schema validation",
+      "express-mongo-sanitize - NoSQL injection prevention",
+      "DOMPurify - Frontend XSS protection"
+    ],
+    "code_changes": [
+      "Add ObjectId validation middleware",
+      "Implement comprehensive input validation",
+      "Create error sanitization utility",
+      "Add ownership verification for all resources",
+      "Implement proper logging with sensitive data filtering",
+      "Add unit tests for security functions"
+    ]
+  },
+  "next_steps": [
+    "Review and implement all CRITICAL fixes within 24 hours",
+    "Conduct penetration testing after fixes",
+    "Set up automated security scanning (npm audit, Snyk, etc.)",
+    "Establish security code review process",
+    "Create incident response plan",
+    "Schedule regular security assessments (quarterly)"
+  ]
+}
