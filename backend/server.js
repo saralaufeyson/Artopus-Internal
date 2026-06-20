@@ -4,6 +4,10 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
+const { apiLimiter } = require('./middleware/rateLimiters');
+const errorHandler = require('./middleware/errorHandler');
+
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -27,8 +31,20 @@ const connectDB = async () => {
 
 connectDB();
 
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet());
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate limiting
+app.use('/api/', apiLimiter);
+
 
 app.get('/', (req, res) => {
   res.send('Artopus Backend API is running!');
@@ -38,6 +54,9 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/artists', artistRoutes); // NEW
 app.use('/api/artworks', artworkRoutes); // NEW
+
+// Global error handler
+app.use(errorHandler);
 
 
 app.listen(PORT, () => {

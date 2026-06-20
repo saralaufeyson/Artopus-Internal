@@ -9,14 +9,16 @@ const {
   deleteArtist,
 } = require('../controllers/artistController'); // <--- Import functions from artistController
 const { protect, authorize } = require('../middleware/authMiddleware');
+const validateObjectId = require('../middleware/validateObjectId');
+
 
 router.route('/')
   .get(protect, getArtists)
   .post(protect, authorize('admin', 'artist_manager'), createArtist);
 
 router.route('/:id')
-  .get(protect, getArtistById)
-  .put(protect, authorize('admin', 'artist_manager'), updateArtist)
-  .delete(protect, authorize('admin'), deleteArtist);
+  .get(protect, validateObjectId, getArtistById)
+  .put(protect, authorize('admin', 'artist_manager'), validateObjectId, updateArtist)
+  .delete(protect, authorize('admin'), validateObjectId, deleteArtist);
 
 module.exports = router; // <--- Export this router instance

@@ -3,6 +3,11 @@ const Pricing = require('../models/Pricing');
 const calculatePricing = require('../utils/calculatePricing');
 const mongoose = require('mongoose');
 
+const escapeRegex = (text) => {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+};
+
+
 const handleMongooseError = (res, error) => {
   if (error instanceof mongoose.Error.CastError) {
     return res.status(400).json({ message: `Invalid ID: ${error.value}` });
@@ -22,9 +27,10 @@ const getArtworks = async (req, res) => {
     const query = {};
 
     if (search) {
+      const sanitizedSearch = escapeRegex(search.toString());
       query.$or = [
-        { codeNo: { $regex: search, $options: 'i' } },
-        { title: { $regex: search, $options: 'i' } },
+        { codeNo: { $regex: sanitizedSearch, $options: 'i' } },
+        { title: { $regex: sanitizedSearch, $options: 'i' } },
       ];
     }
     if (artist) query.artist = artist;

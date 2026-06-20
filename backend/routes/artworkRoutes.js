@@ -9,6 +9,8 @@ const {
   deleteArtwork, // This is the direct hard-delete function
 } = require('../controllers/artworkController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const validateObjectId = require('../middleware/validateObjectId');
+
 
 // Base routes for artworks
 router.route('/')
@@ -17,9 +19,9 @@ router.route('/')
 
 // Routes for a single artwork
 router.route('/:id')
-  .get(protect, getArtworkById)
-  .put(protect, authorize('admin', 'data_entry', 'pricing_manager'), updateArtwork)
+  .get(protect, validateObjectId, getArtworkById)
+  .put(protect, authorize('admin', 'data_entry', 'pricing_manager'), validateObjectId, updateArtwork)
   // This route now performs a direct, permanent deletion and is restricted to admins
-  .delete(protect, authorize('admin'), deleteArtwork);
+  .delete(protect, authorize('admin'), validateObjectId, deleteArtwork);
 
 module.exports = router;

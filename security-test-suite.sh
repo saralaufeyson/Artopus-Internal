@@ -10,7 +10,7 @@
 # NOTE: This is for TESTING PURPOSES ONLY on authorized systems
 ###############################################################################
 
-set -e
+set +e
 
 # Configuration
 API_BASE="${1:-http://localhost:5000}"
