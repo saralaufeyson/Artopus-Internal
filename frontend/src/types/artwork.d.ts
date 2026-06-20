@@ -31,11 +31,13 @@ export interface Artwork {
   noOfDays?: number;
   imageUrl?: string;
   tags: string[];
-  sellingPrice: number; // <-- Added to Artwork model directly for base price
+  sellingPrice: number;
   hasParticipatedInCompetition?: boolean;
   internalRemarks?: InternalRemark[];
   marketingStatus?: string;
-  monitoringItems?: string[]; // Array of strings
+  monitoringItems?: string[];
+  listingType?: 'original' | 'print';
+  printSize?: 'A4' | 'A5' | 'A3';
 
   // Deletion related fields (from backend model)
   isDeleted?: boolean;
@@ -59,6 +61,27 @@ export interface SoldDetails {
   buyerName?: string;
   buyerContact?: string;
   soldByUserId?: string; // User ID who marked it sold
+}
+
+export interface PackagingOptions {
+  cardboard?: boolean;
+  frame?: boolean;
+  designerSheet?: boolean;
+  cornerSafe?: boolean;
+  translucentSheet?: boolean;
+  brandSticker?: boolean;
+  catalogue?: boolean;
+  artstorySticker?: boolean;
+  labelBillSticker?: boolean;
+  easyshipAmazon?: boolean;
+}
+
+export interface AmazonCalculations {
+  subtotal: number;
+  referralCharge: number;
+  gst: number;
+  profitMargin: number;
+  finalAmazonPrice: number;
 }
 
 export interface OriginalPricing {
@@ -129,6 +152,15 @@ export interface Pricing {
   otherPlatformListings?: PlatformListing[];
   originalPricing?: OriginalPricing;
   printOnDemandPricing?: PrintOnDemandPricing;
+  listingType?: 'original' | 'print';
+  printSize?: 'A4' | 'A5' | 'A3';
+  packagingOptions?: PackagingOptions;
+  packagingBreakdown?: { [key: string]: number };
+  packagingTotal?: number;
+  basePrice?: number;
+  serviceCharge?: number;
+  grandTotal?: number;
+  amazonCalculations?: AmazonCalculations;
   createdAt: string;
   updatedAt: string;
   __v: number;

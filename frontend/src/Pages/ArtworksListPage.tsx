@@ -113,10 +113,21 @@ const ArtworksListPage: React.FC = () => {
       dataIndex: 'artist',
       key: 'artist',
       render: (artist: Artist | string) => (
-        typeof artist === 'object' && artist !== null 
+        typeof artist === 'object' && artist !== null
           ? <a onClick={() => navigate(`/artists/${artist._id}`)}>{artist.name}</a>
           : <span>{String(artist)}</span>
       ),
+    },
+    {
+      title: 'Listing Type',
+      dataIndex: 'listingType',
+      key: 'listingType',
+      render: (listingType: string, record: Artwork) => {
+        if (listingType === 'print') {
+          return <Tag color="blue">{record.printSize} Canvas</Tag>;
+        }
+        return <Tag color="orange">ORIGINAL</Tag>;
+      },
     },
     {
       title: 'Status',

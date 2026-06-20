@@ -68,6 +68,16 @@ const ArtworkSchema = new mongoose.Schema({
     default: false,
   },
   // Simplified internalRemarks to match frontend and common use
+  listingType: {
+    type: String,
+    enum: ['original', 'print'],
+    default: 'original',
+  },
+  printSize: {
+    type: String,
+    enum: ['A4', 'A5', 'A3'],
+    trim: true,
+  },
   internalRemarks: [{ // Array of internal comments as strings (frontend sends single string, backend converts)
     remark: { type: String }, // Renamed from 'comment' to 'remark' for consistency with frontend
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

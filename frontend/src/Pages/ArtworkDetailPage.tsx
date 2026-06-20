@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Typography, Breadcrumb, Spin, Row, Col, Card, Tag,
-  Descriptions, Image, Divider, List, Button, Space
+  Descriptions, Image, Divider, List, Button, Space, Collapse
 } from 'antd';
 import {
   PictureOutlined, ArrowLeftOutlined, EditOutlined,
@@ -140,12 +140,9 @@ const ArtworkDetailPage: React.FC = () => {
                     <Descriptions.Item label="Artist Charge">₹{original.artistCharge?.toLocaleString('en-IN')}</Descriptions.Item>
                     <Descriptions.Item label="Packing & Delivery Charges">₹{original.packingAndDeliveryCharges?.toLocaleString('en-IN')}</Descriptions.Item>
                     <Descriptions.Item label="Raw Total"><Text strong>₹{original.rawTotal?.toLocaleString('en-IN')}</Text></Descriptions.Item>
-                    <Descriptions.Item label="Raw Total + Profit (×1.3)"><Text strong style={{ color: '#52c41a' }}>₹{original.rawTotalPlusProfit?.toLocaleString('en-IN')}</Text></Descriptions.Item>
-                    <Descriptions.Item label="Total + GST (×1.12)"><Text strong style={{ color: '#fa8c16' }}>₹{original.totalWithGST?.toLocaleString('en-IN')}</Text></Descriptions.Item>
-                    <Descriptions.Item label="Gallery Markup (×5)"><Text strong style={{ color: '#722ed1' }}>₹{original.grandTotal?.toLocaleString('en-IN')}</Text></Descriptions.Item>
-                    <Descriptions.Item label="Print on Amazon (Original)">₹{original.printOnAmazonOriginal?.toLocaleString('en-IN')}</Descriptions.Item>
-                    <Descriptions.Item label="Print on Amazon (Small)">₹{original.printOnAmazonSmall?.toLocaleString('en-IN')}</Descriptions.Item>
-                    <Descriptions.Item label="Print on Amazon (Big)">₹{original.printOnAmazonBig?.toLocaleString('en-IN')}</Descriptions.Item>
+                    <Descriptions.Item label="Raw Total + Profit (×30 percent)"><Text strong style={{ color: '#52c41a' }}>₹{original.rawTotalPlusProfit?.toLocaleString('en-IN')}</Text></Descriptions.Item>
+                    <Descriptions.Item label="Total + GST (×12 percent)"><Text strong style={{ color: '#fa8c16' }}>₹{original.totalWithGST?.toLocaleString('en-IN')}</Text></Descriptions.Item>
+                    <Descriptions.Item label="Gallery Markup (total+gst×5)"><Text strong style={{ color: '#722ed1' }}>₹{original.grandTotal?.toLocaleString('en-IN')}</Text></Descriptions.Item>
                     <Descriptions.Item label="Main Total"><Text strong style={{ color: '#13c2c2' }}>₹{original.mainTotal?.toLocaleString('en-IN')}</Text></Descriptions.Item>
                     <Descriptions.Item label="Gallery Price"><Title level={4} style={{ color: '#A36FFF' }}>₹{original.galleryPrice?.toLocaleString('en-IN')}</Title></Descriptions.Item>
                   </Descriptions>
@@ -173,6 +170,64 @@ const ArtworkDetailPage: React.FC = () => {
             </>
           )}
         </div>
+
+        {/* --- New Listing-Based Pricing --- */}
+        {pricing?.listingType && (
+          <Card style={{ marginBottom: 24, background: '#1890ff14', borderColor: '#1890ff' }}>
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
+                <Title level={4} style={{ marginTop: 0, color: '#1890ff' }}>Listing Information</Title>
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label="Listing Type">
+                    <Tag color={pricing.listingType === 'original' ? 'orange' : 'blue'}>
+                      {pricing.listingType?.toUpperCase()}
+                    </Tag>
+                  </Descriptions.Item>
+                  {pricing.printSize && (
+                    <Descriptions.Item label="Print Size">
+                      <Text strong>{pricing.printSize} Canvas</Text>
+                    </Descriptions.Item>
+                  )}
+                  <Descriptions.Item label="Base Price">₹{pricing.basePrice?.toLocaleString('en-IN')}</Descriptions.Item>
+                  <Descriptions.Item label="Packaging Total">₹{pricing.packagingTotal?.toLocaleString('en-IN')}</Descriptions.Item>
+                  <Descriptions.Item label="Service Charge">₹500</Descriptions.Item>
+                </Descriptions>
+              </Col>
+              <Col xs={24} md={12}>
+                <Card style={{ background: 'white', border: '2px solid #1890ff', textAlign: 'center', padding: '20px' }}>
+                  <Text style={{ fontSize: '12px', display: 'block', marginBottom: '8px', color: '#666' }}>GRAND TOTAL</Text>
+                  <Title level={2} style={{ margin: 0, color: '#1890ff' }}>₹{pricing.grandTotal?.toLocaleString('en-IN')}</Title>
+                  {pricing.amazonCalculations?.finalAmazonPrice && pricing.amazonListing?.isInAmazon && (
+                    <>
+                      <Divider style={{ margin: '12px 0' }} />
+                      <Text style={{ fontSize: '12px', display: 'block', marginBottom: '8px', color: '#666' }}>AMAZON FINAL PRICE</Text>
+                      <Title level={3} style={{ margin: 0, color: '#ff7a45' }}>₹{pricing.amazonCalculations.finalAmazonPrice?.toLocaleString('en-IN')}</Title>
+                    </>
+                  )}
+                </Card>
+              </Col>
+            </Row>
+
+            <Collapse items={[{ key: '1', label: 'Show Detailed Breakdown', children: (
+              <Descriptions bordered column={1} size="small">
+                <Descriptions.Item label="Base Price">₹{pricing.basePrice?.toLocaleString('en-IN')}</Descriptions.Item>
+                {pricing.packagingBreakdown && Object.entries(pricing.packagingBreakdown).map(([key, cost]) => (
+                  <Descriptions.Item key={key} label={key}>₹{cost?.toLocaleString('en-IN')}</Descriptions.Item>
+                ))}
+                <Descriptions.Item label="Service Charge">₹500</Descriptions.Item>
+                <Descriptions.Item label="GRAND TOTAL"><Text strong style={{ color: '#1890ff', fontSize: '14px' }}>₹{pricing.grandTotal?.toLocaleString('en-IN')}</Text></Descriptions.Item>
+                {pricing.amazonCalculations && pricing.amazonListing?.isInAmazon && (
+                  <>
+                    <Descriptions.Item label="Amazon Referral (15%)">₹{pricing.amazonCalculations.referralCharge?.toLocaleString('en-IN')}</Descriptions.Item>
+                    <Descriptions.Item label="GST (18%)">₹{pricing.amazonCalculations.gst?.toLocaleString('en-IN')}</Descriptions.Item>
+                    <Descriptions.Item label="Profit Margin (30%)">₹{pricing.amazonCalculations.profitMargin?.toLocaleString('en-IN')}</Descriptions.Item>
+                    <Descriptions.Item label="AMAZON FINAL PRICE"><Text strong style={{ color: '#ff7a45', fontSize: '14px' }}>₹{pricing.amazonCalculations.finalAmazonPrice?.toLocaleString('en-IN')}</Text></Descriptions.Item>
+                  </>
+                )}
+              </Descriptions>
+            )}]} style={{ marginTop: '16px' }} />
+          </Card>
+        )}
 
         {/* --- Sold Information --- */}
         {pricing?.isOriginalAvailable && pricing?.originalPricing?.soldDetails?.isSold && (

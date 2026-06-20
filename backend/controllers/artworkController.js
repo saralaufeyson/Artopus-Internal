@@ -3,12 +3,34 @@ const Pricing = require('../models/Pricing');
 const calculatePricing = require('../utils/calculatePricing');
 const mongoose = require('mongoose');
 
+const PRINT_DIMENSIONS = {
+  A3: { length: 16.54, breadth: 11.69, unit: 'inches' },
+  A4: { length: 11.69, breadth: 8.27, unit: 'inches' },
+  A5: { length: 8.27, breadth: 5.83, unit: 'inches' },
+};
+
+const getDimensions = (body, currentDimensions) => {
+  if (body.listingType === 'print' && PRINT_DIMENSIONS[body.printSize]) {
+    return PRINT_DIMENSIONS[body.printSize];
+  }
+
+  const dimensions = body.dimensions;
+  const isComplete = dimensions && dimensions.length != null
+    && dimensions.breadth != null && dimensions.unit;
+
+  return isComplete ? dimensions : currentDimensions;
+};
+
 const escapeRegex = (text) => {
   return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 };
 
 
 const handleMongooseError = (res, error) => {
+  if (error instanceof mongoose.Error.ValidationError) {
+    const errors = Object.values(error.errors).map(({ path, message }) => ({ path, message }));
+    return res.status(400).json({ message: error.message, errors });
+  }
   if (error instanceof mongoose.Error.CastError) {
     return res.status(400).json({ message: `Invalid ID: ${error.value}` });
   }
@@ -81,13 +103,14 @@ const createArtwork = async (req, res) => {
       return res.status(400).json({ message: 'Required fields are missing.' });
     }
 
+    const dimensions = getDimensions(body);
     const artwork = new Artwork({
       codeNo: body.codeNo,
       title: body.title,
       penName: body.penName,
       artist: body.artistId,
       medium: body.medium,
-      dimensions: body.dimensions,
+      dimensions,
       status: body.status,
       noOfDays: body.noOfDays,
       imageUrl: body.imageUrl,
@@ -99,21 +122,27 @@ const createArtwork = async (req, res) => {
       internalRemarks: body.internalRemarks
         ? [{ remark: body.internalRemarks, userId: req.user._id }]
         : [],
+      listingType: body.listingType || 'original',
+      printSize: body.printSize,
     });
 
     const createdArtwork = await artwork.save();
 
     // Always create pricing data, even with default values
     const pricingInput = {
-      lengthInches: body.dimensions.length,
-      breadthInches: body.dimensions.breadth,
-      artMaterialCost: body.artMaterialCost || 1000, // Default material cost
-      artistCharge: body.artistCharge || 2000, // Default artist charge
+      listingType: body.listingType || 'original',
+      printSize: body.printSize,
+      packagingOptions: body.packagingOptions || {},
+      basePrice: body.sellingPrice || 0,
+      lengthInches: dimensions?.length || 0,
+      breadthInches: dimensions?.breadth || 0,
+      artMaterialCost: body.artMaterialCost || 1000,
+      artistCharge: body.artistCharge || 2000,
       noOfDays: body.noOfDays || 0,
-      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500, // Default packing cost
-      baseCostPerSqFt: body.basePrintCostPerSqFt || 500, // Default to 500 as per your formula
-      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true, // Default to true
-      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : true, // Default to true
+      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500,
+      baseCostPerSqFt: body.basePrintCostPerSqFt || 500,
+      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true,
+      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : false,
       soldDetails: body.soldDetails,
     };
 
@@ -153,14 +182,15 @@ const updateArtwork = async (req, res) => {
     }
 
     const { body } = req;
+    const dimensions = getDimensions(body, artwork.dimensions);
 
-    Object.assign(artwork, {
+    const artworkUpdates = {
       codeNo: body.codeNo,
       title: body.title,
       penName: body.penName,
       artist: body.artistId,
       medium: body.medium,
-      dimensions: body.dimensions,
+      dimensions,
       status: body.status,
       noOfDays: body.noOfDays,
       imageUrl: body.imageUrl,
@@ -169,6 +199,12 @@ const updateArtwork = async (req, res) => {
       marketingStatus: body.marketingStatus,
       monitoringItems: body.monitoringItems,
       sellingPrice: body.sellingPrice,
+      listingType: body.listingType || 'original',
+      printSize: body.printSize,
+    };
+
+    Object.keys(artworkUpdates).forEach((key) => {
+      if (artworkUpdates[key] !== undefined) artwork[key] = artworkUpdates[key];
     });
 
     if (body.internalRemarks && body.internalRemarks.trim() !== '') {
@@ -187,15 +223,19 @@ const updateArtwork = async (req, res) => {
 
     // Always ensure we have pricing data with defaults
     const pricingInput = {
-      lengthInches: body.dimensions.length,
-      breadthInches: body.dimensions.breadth,
-      artMaterialCost: body.artMaterialCost || 1000, // Default material cost
-      artistCharge: body.artistCharge || 2000, // Default artist charge
+      listingType: body.listingType || 'original',
+      printSize: body.printSize,
+      packagingOptions: body.packagingOptions || {},
+      basePrice: body.sellingPrice || 0,
+      lengthInches: dimensions?.length || 0,
+      breadthInches: dimensions?.breadth || 0,
+      artMaterialCost: body.artMaterialCost || 1000,
+      artistCharge: body.artistCharge || 2000,
       noOfDays: body.noOfDays || 0,
-      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500, // Default packing cost
-      baseCostPerSqFt: body.basePrintCostPerSqFt || 500, // Default to 500 as per your formula
-      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true, // Default to true
-      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : true, // Default to true
+      packingAndDeliveryCharges: body.packingAndDeliveryCharges || 500,
+      baseCostPerSqFt: body.basePrintCostPerSqFt || 500,
+      isOriginalAvailable: body.isOriginalAvailable !== undefined ? body.isOriginalAvailable : true,
+      isPrintOnDemandAvailable: body.isPrintOnDemandAvailable !== undefined ? body.isPrintOnDemandAvailable : false,
       soldDetails: body.soldDetails,
     };
 

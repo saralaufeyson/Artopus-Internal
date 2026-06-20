@@ -81,6 +81,39 @@ const PricingSchema = new mongoose.Schema({
     platform: { type: String, trim: true },
     link: { type: String, trim: true },
   }],
+  listingType: {
+    type: String,
+    enum: ['original', 'print'],
+    default: 'original',
+  },
+  printSize: {
+    type: String,
+    enum: ['A4', 'A5', 'A3'],
+  },
+  packagingOptions: {
+    cardboard: { type: Boolean, default: false },
+    frame: { type: Boolean, default: false },
+    designerSheet: { type: Boolean, default: false },
+    cornerSafe: { type: Boolean, default: false },
+    translucentSheet: { type: Boolean, default: false },
+    brandSticker: { type: Boolean, default: false },
+    catalogue: { type: Boolean, default: false },
+    artstorySticker: { type: Boolean, default: false },
+    labelBillSticker: { type: Boolean, default: false },
+    easyshipAmazon: { type: Boolean, default: false },
+  },
+  packagingBreakdown: mongoose.Schema.Types.Mixed,
+  packagingTotal: { type: Number, default: 0 },
+  basePrice: { type: Number, default: 0 },
+  serviceCharge: { type: Number, default: 500 },
+  grandTotal: { type: Number, default: 0 },
+  amazonCalculations: {
+    subtotal: { type: Number, default: 0 },
+    referralCharge: { type: Number, default: 0 },
+    gst: { type: Number, default: 0 },
+    profitMargin: { type: Number, default: 0 },
+    finalAmazonPrice: { type: Number, default: 0 },
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Pricing', PricingSchema);
