@@ -67,7 +67,7 @@ const createArtist = async (req, res) => {
 // @route   PUT /api/artists/:id
 // @access  Private (Admin or Artist_Manager role required)
 const updateArtist = async (req, res) => {
-  const { name, contact, socialMedia, bio, internalNotes, bankDetails } = req.body;
+  const { name, contact, socialMedia, bio, internalNotes, bankDetails, status } = req.body;
 
   try {
     const artist = await Artist.findById(req.params.id);
@@ -78,6 +78,9 @@ const updateArtist = async (req, res) => {
       artist.socialMedia = socialMedia || artist.socialMedia;
       artist.bio = bio || artist.bio;
       artist.internalNotes = internalNotes || artist.internalNotes;
+      if (status) {
+        artist.status = status;
+      }
       artist.updatedAt = Date.now();
 
       // Only update bank details if user has appropriate role
