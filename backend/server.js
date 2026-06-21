@@ -34,8 +34,24 @@ connectDB();
 // Security middleware
 app.use(helmet());
 
+const allowedOrigins = new Set([
+  'http://localhost:3000',
+  'https://artopusindia-internal.onrender.com',
+  ...(process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean),
+]);
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin(origin, callback) {
+    // Requests without an Origin header are server-to-server or local tooling.
+    if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ''))) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
   credentials: true,
 };
 app.use(cors(corsOptions));

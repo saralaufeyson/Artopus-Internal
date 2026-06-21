@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Normalize the configured URL so hosting values with a trailing slash remain valid.
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/users/login`,
