@@ -11,6 +11,7 @@ import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
 import type { Artwork, PackagingOptions } from '../types/artwork';
 import type { Artist } from '../types/artist';
+import { getApiUrl } from '../config/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -63,7 +64,7 @@ const ArtworkFormPage: React.FC = () => {
     const fetchArtists = async () => {
       setFetchingArtists(true);
       try {
-        const res = await axios.get<Artist[]>(`http://localhost:5000/api/artists`, {
+        const res = await axios.get<Artist[]>(getApiUrl('/api/artists'), {
           headers: { Authorization: `Bearer ${token}` },
         });
         setArtists(res.data);
@@ -85,7 +86,7 @@ const ArtworkFormPage: React.FC = () => {
       }
       setFetchingArtwork(true);
       try {
-        const artworkRes = await axios.get<{ artwork: Artwork; pricing: any }>(`http://localhost:5000/api/artworks/${id}`, {
+        const artworkRes = await axios.get<{ artwork: Artwork; pricing: any }>(getApiUrl(`/api/artworks/${id}`), {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -113,9 +114,7 @@ const ArtworkFormPage: React.FC = () => {
           amazonLink: pricing?.amazonListing?.link,
           otherPlatformListings: pricing?.otherPlatformListings || [],
           isSold: pricing?.originalPricing?.soldDetails?.isSold,
-          saleDate: pricing?.originalPricing?.soldDetails?.saleDate
-            ? new Date(pricing.originalPricing.soldDetails.saleDate).toISOString().split('T')[0]
-            : undefined,
+          saleDate: pricing?.originalPricing?.soldDetails?.saleDate ? new Date(pricing.originalPricing.soldDetails.saleDate) : undefined,
           sellingPriceOriginal: pricing?.originalPricing?.soldDetails?.sellingPrice,
           buyerName: pricing?.originalPricing?.soldDetails?.buyerName,
           buyerContact: pricing?.originalPricing?.soldDetails?.buyerContact,
@@ -217,12 +216,12 @@ const ArtworkFormPage: React.FC = () => {
 
       let response;
       if (isEditing) {
-        response = await axios.put(`http://localhost:5000/api/artworks/${id}`, payload, {
+        response = await axios.put(getApiUrl(`/api/artworks/${id}`), payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         showNotification('success', 'Artwork updated successfully!');
       } else {
-        response = await axios.post(`http://localhost:5000/api/artworks`, payload, {
+        response = await axios.post(getApiUrl('/api/artworks'), payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         showNotification('success', 'Artwork added successfully!');
@@ -265,7 +264,6 @@ const ArtworkFormPage: React.FC = () => {
           dimensionsUnit: 'inches',
           hasParticipatedInCompetition: false,
           isOriginalAvailable: true,
-          isSold: false,
           isPrintOnDemandAvailable: false,
           isInAmazon: false,
           monitoringItems: [],
@@ -429,7 +427,7 @@ const ArtworkFormPage: React.FC = () => {
         </Form.Item>
 
         <Form.Item name="imageUrl" label="Image URL" rules={[{ type: 'url', message: 'Invalid URL' }]}>
-          <Input placeholder="Pintrest uploaded image link" />
+          <Input placeholder="Google Drive link" />
         </Form.Item>
 
         <Form.Item noStyle shouldUpdate={(prevValues, curValues) => prevValues.imageUrl !== curValues.imageUrl}>
@@ -477,45 +475,6 @@ const ArtworkFormPage: React.FC = () => {
                   </Row>
                   <Form.Item name="packingAndDeliveryCharges" label="Packing & Delivery (₹)">
                     <InputNumber min={0} style={{ width: '100%' }} />
-                  </Form.Item>
-
-                  <Form.Item name="isSold" valuePropName="checked">
-                    <Checkbox>Mark original artwork as sold</Checkbox>
-                  </Form.Item>
-
-                  <Form.Item noStyle shouldUpdate={(prevValues, curValues) => prevValues.isSold !== curValues.isSold}>
-                    {({ getFieldValue }) => getFieldValue('isSold') ? (
-                      <Card size="small" title="Sale Details" style={{ width: '100%' }}>
-                        <Row gutter={16}>
-                          <Col span={12}>
-                            <Form.Item
-                              name="sellingPriceOriginal"
-                              label="Actual Selling Price (₹)"
-                              rules={[{ required: true, message: 'Please enter the selling price' }]}
-                            >
-                              <InputNumber min={0} style={{ width: '100%' }} />
-                            </Form.Item>
-                          </Col>
-                          <Col span={12}>
-                            <Form.Item name="saleDate" label="Sale Date">
-                              <Input type="date" />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-                        <Row gutter={16}>
-                          <Col span={12}>
-                            <Form.Item name="buyerName" label="Buyer Name">
-                              <Input />
-                            </Form.Item>
-                          </Col>
-                          <Col span={12}>
-                            <Form.Item name="buyerContact" label="Buyer Contact">
-                              <Input />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-                      </Card>
-                    ) : null}
                   </Form.Item>
                 </Space>
               );

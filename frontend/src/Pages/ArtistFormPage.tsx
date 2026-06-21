@@ -7,7 +7,7 @@ import { useNotification } from '../Context/NotificationContext'; // Import useN
 import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
 import type { Artist } from '../types/artist'; // Use Artist type
- // Use Artist type
+import { getApiUrl } from '../config/api';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -34,7 +34,7 @@ const ArtistFormPage: React.FC = () => {
       }
       setFetchingArtist(true);
       try {
-        const res = await axios.get<Artist>(`http://localhost:5000/api/artists/${id}`, {
+        const res = await axios.get<Artist>(getApiUrl(`/api/artists/${id}`), {
           headers: { Authorization: `Bearer ${token}` },
         });
         // Prepare data for the form, especially for nested objects
@@ -92,12 +92,12 @@ const ArtistFormPage: React.FC = () => {
       };
 
       if (isEditing) {
-        response = await axios.put(`http://localhost:5000/api/artists/${id}`, payload, {
+        response = await axios.put(getApiUrl(`/api/artists/${id}`), payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         showNotification('success', 'Artist updated successfully!');
       } else {
-        response = await axios.post(`http://localhost:5000/api/artists`, payload, {
+        response = await axios.post(getApiUrl('/api/artists'), payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         showNotification('success', 'Artist added successfully!');

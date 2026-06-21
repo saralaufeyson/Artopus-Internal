@@ -7,6 +7,7 @@ import { useNotification } from '../Context/NotificationContext'; // Import useN
 import axios from 'axios';
 import type { Artwork, ArtworksResponse, Artist } from '../types/artwork';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../config/api';
 
 const { Title, Text } = Typography;
 
@@ -37,10 +38,10 @@ const DashboardPage: React.FC = () => {
     try {
       // Fetch artworks and artists in parallel
       const [artworksRes, artistsRes] = await Promise.all([
-        axios.get<ArtworksResponse>(`http://localhost:5000/api/artworks?limit=5`, {
+        axios.get<ArtworksResponse>(getApiUrl('/api/artworks?limit=5'), {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get<Artist[]>(`http://localhost:5000/api/artists`, {
+        axios.get<Artist[]>(getApiUrl('/api/artists'), {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);

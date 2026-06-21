@@ -5,6 +5,7 @@ import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-d
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../Context/NotificationContext'; // Import useNotification
+import { getApiUrl } from '../config/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -17,7 +18,7 @@ const RegisterPage: React.FC = () => {
   const onFinish = async (values: any) => {
     const { username, email, password, firstName, lastName, roles } = values;
     try {
-      await axios.post('http://localhost:5000/api/users/register', {
+      await axios.post(getApiUrl('/api/users/register'), {
         username,
         email,
         password,

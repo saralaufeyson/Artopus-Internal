@@ -7,6 +7,7 @@ import { useNotification } from '../Context/NotificationContext'; // Import useN
 import axios from 'axios';
 import type { Artwork, ArtworksResponse, Artist } from '../types/artwork';
 import { useAuth } from '../Context/AuthContext';
+import { getApiUrl } from '../config/api';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -39,7 +40,7 @@ const ArtworksListPage: React.FC = () => {
       if (filters.search) query.append('search', filters.search);
       if (filters.status) query.append('status', filters.status);
 
-      const res = await axios.get<ArtworksResponse>(`http://localhost:5000/api/artworks?${query.toString()}`, {
+      const res = await axios.get<ArtworksResponse>(getApiUrl(`/api/artworks?${query.toString()}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -94,7 +95,7 @@ const ArtworksListPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/artworks/${id}`, {
+      await axios.delete(getApiUrl(`/api/artworks/${id}`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       showNotification('success', 'Artwork permanently deleted!');

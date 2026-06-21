@@ -14,6 +14,7 @@ import { useNotification } from '../Context/NotificationContext';
 import { useAuth } from '../Context/AuthContext';
 import type { Artist } from '../types/artist';
 import type { Artwork, ArtworksResponse } from '../types/artwork';
+import { getApiUrl } from '../config/api';
 
 const { Title, Text, Paragraph, Link } = Typography;
 
@@ -36,10 +37,10 @@ const ArtistDetailPage: React.FC = () => {
     setLoading(true);
     try {
       const [artistRes, artworksRes] = await Promise.all([
-        axios.get<Artist>(`http://localhost:5000/api/artists/${id}`, {
+        axios.get<Artist>(getApiUrl(`/api/artists/${id}`), {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get<ArtworksResponse>(`http://localhost:5000/api/artworks?artist=${id}`, {
+        axios.get<ArtworksResponse>(getApiUrl(`/api/artworks?artist=${id}`), {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

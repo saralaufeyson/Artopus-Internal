@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useAuth } from '../Context/AuthContext';
 import type { Artwork, Pricing, Artist } from '../types/artwork';
 import { useNotification } from '../Context/NotificationContext';
+import { getApiUrl } from '../config/api';
 
 const { Title, Text, Paragraph, Link } = Typography;
 
@@ -35,7 +36,7 @@ const ArtworkDetailPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get<{ artwork: Artwork; pricing: Pricing }>(
-        `http://localhost:5000/api/artworks/${id}`,
+        getApiUrl(`/api/artworks/${id}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setArtwork(response.data.artwork);

@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 import type { User, AuthContextType } from '../types/auth'; // Import your types
- // Import your types
+import { getApiUrl } from '../config/api';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await axios.post<{ token: string; user: User }>('http://localhost:5000/api/users/login', { email, password });
+      const res = await axios.post<{ token: string; user: User }>(getApiUrl('/api/users/login'), { email, password });
       const { token: newToken, user: userData } = res.data;
 
       localStorage.setItem('token', newToken);
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loadUser = async () => {
     if (token && !user) { // Only load if token exists and user is not set
       try {
-        const res = await axios.get<User>('http://localhost:5000/api/users/profile');
+        const res = await axios.get<User>(getApiUrl('/api/users/profile'));
         setUser(res.data);
         setIsAuthenticated(true); // Ensure isAuthenticated is true if user data is loaded
       } catch (error) {

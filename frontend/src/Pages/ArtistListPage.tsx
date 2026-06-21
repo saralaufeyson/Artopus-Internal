@@ -12,6 +12,7 @@ import { useNotification } from '../Context/NotificationContext';
 import axios from 'axios';
 import type { Artist, ArtistsResponse } from '../types/artist';
 import { useAuth } from '../Context/AuthContext';
+import { getApiUrl } from '../config/api';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -44,7 +45,7 @@ const ArtistsListPage: React.FC = () => {
         return;
       }
 
-      const res = await axios.get<ArtistsResponse>(`http://localhost:5000/api/artists`, {
+      const res = await axios.get<ArtistsResponse>(getApiUrl('/api/artists'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -124,7 +125,7 @@ const ArtistsListPage: React.FC = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:5000/api/artists/${id}`, {
+      await axios.delete(getApiUrl(`/api/artists/${id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
