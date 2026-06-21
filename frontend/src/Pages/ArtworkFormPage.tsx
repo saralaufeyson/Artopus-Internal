@@ -429,7 +429,7 @@ const ArtworkFormPage: React.FC = () => {
         </Form.Item>
 
         <Form.Item name="imageUrl" label="Image URL" rules={[{ type: 'url', message: 'Invalid URL' }]}>
-          <Input placeholder="Google Drive link" />
+          <Input placeholder="Pintrest uploaded image link" />
         </Form.Item>
 
         <Form.Item noStyle shouldUpdate={(prevValues, curValues) => prevValues.imageUrl !== curValues.imageUrl}>
